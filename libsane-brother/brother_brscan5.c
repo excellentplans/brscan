@@ -5,8 +5,9 @@
  *
  * This module is PARALLEL to the existing brscan3/4 pipeline and is only
  * reached through the single ops-dispatch gate in brother.c (sane_open,
- * brscan5_is_brscan5(): DS-640 product ID 0x0468 or seriesNo==5). It must
- * not contain any scattered series checks.
+ * brscan5_is_brscan5(): a brscan5 device profile exists for the model's
+ * USB vendor+product ID). It must not contain any scattered series
+ * checks.
  *
  * The pure protocol functions (command encoders, response readers,
  * parameter mapping) live in brscan5_proto.c / brscan5_proto.h.
@@ -15,9 +16,9 @@
  * primitives do NOT imply brscan4 record framing (that lives in
  * brother_brscan4.c), but their bulk-endpoint selection is seriesNo
  * driven (ChangeEndpoint[], default 0x84 IN / 0x03 OUT) and would pick
- * the wrong endpoints for series 5. The DS-640 needs fixed EP 0x04 OUT /
- * EP 0x83 IN on interface 1, so this module uses its own thin libusb
- * wrappers with those endpoints instead.
+ * the wrong endpoints. The brscan5 devices use their own bulk endpoints
+ * from the device profile (profile table below: ep_in/ep_out), so this
+ * module uses its own thin libusb wrappers with those endpoints instead.
  */
 
 #include <stdio.h>
@@ -39,6 +40,81 @@
 #include "brother_log.h"       /* WriteLog()                            */
 
 /* ======================================================================
+ * Device profiles
+ *
+ * Model facts for the devices driven by the brscan5 command layer,
+ * keyed by USB product ID (vendor 0x04f9 / SCANNER_VENDOR, checked in
+ * brscan5_find_profile). The single DS-640 entry reproduces the
+ * formerly hardcoded feature values and bulk endpoints bit-exactly
+ * (see brscan5_apply_model_profile and the USB transport below).
+ * ====================================================================== */
+
+const struct brscan5_model_profile brscan5_profiles[] = {
+    {
+        .product_id        = 0x0468,
+        .name              = "DS-640",
+        .reso              = { .bit = {
+            .bDpi100x100   = 1,      /*  100 x  100 dpi */
+            .bDpi150x150   = 1,      /*  150 x  150 dpi */
+            .bDpi200x200   = 1,      /*  200 x  200 dpi */
+            .bDpi300x300   = 1,      /*  300 x  300 dpi */
+            .bDpi400x400   = 1,      /*  400 x  400 dpi */
+            .bDpi600x600   = 1,      /*  600 x  600 dpi */
+            .bDpi1200x1200 = 1,      /* 1200 x 1200 dpi */
+        } },
+        .scanmode          = { .bit = {
+            .bBlackWhite   = 1,      /* "Black & White" */
+            .bTrueGray     = 1,      /* "True Gray"     */
+            .b24BitColor   = 1,      /* "24bit Color"   */
+        } },
+        .scansrc           = { .bit = {
+            .ADF           = 1,      /* ADF only: no FB, no duplex      */
+        } },
+        .scan_area_width   = 215.9,  /* letter/legal width  */
+        .scan_area_height  = 355.6,  /* letter/legal length */
+        .ep_in             = 0x83,
+        .ep_out            = 0x04,
+    },
+};
+
+const int brscan5_profile_count =
+    (int)(sizeof(brscan5_profiles) / sizeof(brscan5_profiles[0]));
+
+const struct brscan5_model_profile *
+brscan5_find_profile(uint16_t vendor, uint16_t product)
+{
+    int i;
+
+    if (vendor != SCANNER_VENDOR)
+        return NULL;
+    for (i = 0; i < brscan5_profile_count; i++) {
+        if (brscan5_profiles[i].product_id == product)
+            return &brscan5_profiles[i];
+    }
+    return NULL;
+}
+
+int
+brscan5_is_brscan5(const MODELINF *m)
+{
+    return (m != NULL &&
+            brscan5_find_profile(m->vendorID, m->productID) != NULL);
+}
+
+void
+brscan5_apply_model_profile(const struct brscan5_model_profile *p,
+                            MODELCONFIG *mc)
+{
+    if (!p || !mc)
+        return;
+    mc->SupportReso.val     = p->reso.val;
+    mc->SupportScanMode.val = p->scanmode.val;
+    mc->SupportScanSrc.val  = p->scansrc.val;
+    mc->SupportScanAreaWidth  = p->scan_area_width;
+    mc->SupportScanAreaHeight = p->scan_area_height;
+}
+
+/* ======================================================================
  * Transport interface (T5)
  *
  * All device I/O runs through brscan5_transport_t. Two backends:
@@ -50,9 +126,10 @@
  * NULL, no libusb call is ever made).
  * ====================================================================== */
 
-#define BRSCAN5_EP_OUT          0x04
-#define BRSCAN5_EP_IN           0x83
-/* Timeouts (T7). The USB transport reads URB-by-URB with a short
+/* Bulk endpoints come from the device profile (session->profile), not
+ * from defines — see brscan5_profiles[] above.
+ *
+ * Timeouts (T7). The USB transport reads URB-by-URB with a short
  * per-URB timeout and enforces an idle budget: if no bytes at all arrive
  * within idle_timeout_ms, the read fails with IO_ERROR (no silent
  * endless reads). Command responses during the handshake get a tighter
@@ -105,6 +182,9 @@ struct br5_jpeg_err {
 };
 
 struct brscan5_session {
+    /* Device profile for this session (endpoints etc.), looked up at
+     * open. Never NULL for a successfully opened session. */
+    const struct brscan5_model_profile *profile;
     brscan5_transport_t tport;   /* active transport (usb or replay)   */
     br5_parser_t       *parser;  /* data-phase stream parser           */
 
@@ -164,13 +244,15 @@ struct brscan5_session {
 
 /* ---- USB backend ----------------------------------------------------- */
 
-/* The USB transport wraps the DS-640 fixed bulk endpoints (0x04 OUT /
- * 0x83 IN on interface 1). Replay mode never reaches these wrappers: the
- * replay transport (brother_brscan5_replay.c) has no USB handle and makes
- * no libusb call. */
+/* The USB transport wraps the profile's fixed bulk endpoints (DS-640:
+ * 0x04 OUT / 0x83 IN on interface 1). Replay mode never reaches these
+ * wrappers: the replay transport (brother_brscan5_replay.c) has no USB
+ * handle and makes no libusb call. */
 
 typedef struct {
     Brother_Scanner *this;
+    unsigned char ep_in;         /* bulk IN endpoint (device profile)  */
+    unsigned char ep_out;        /* bulk OUT endpoint (device profile) */
 } brscan5_usb_t;
 
 static int
@@ -183,7 +265,7 @@ brscan5_usb_write(void *ctx, const uint8_t *buf, size_t len)
     if (!this || !this->hScanner || !this->hScanner->usb)
         return -1;
     for (i = 0; i < BRSCAN5_WRITE_RETRY; i++) {
-        rc = usb_bulk_write(this->hScanner->usb, BRSCAN5_EP_OUT,
+        rc = usb_bulk_write(this->hScanner->usb, u->ep_out,
                             (char *)buf, (int)len, 2000);
         if (rc >= 0)
             break;
@@ -221,7 +303,7 @@ brscan5_usb_read(void *ctx, uint8_t *buf, size_t len, size_t *got)
      * budget runs out, then the read fails with IO_ERROR. */
     deadline = brscan5_now_ms() + idle_ms;
     for (;;) {
-        int rc = usb_bulk_read(this->hScanner->usb, BRSCAN5_EP_IN,
+        int rc = usb_bulk_read(this->hScanner->usb, u->ep_in,
                                (char *)buf, (int)len, BRSCAN5_TIMEOUT_URB);
         if (rc > 0) {
             *got = (size_t)rc;
@@ -231,12 +313,13 @@ brscan5_usb_read(void *ctx, uint8_t *buf, size_t len, size_t *got)
             /* idle tick: no bytes within this URB window */
             if (brscan5_now_ms() >= deadline) {
                 WriteLog("brscan5 usb: idle timeout after %d ms without "
-                         "data (EP 0x83)", idle_ms);
+                         "data (EP 0x%02x)", idle_ms, u->ep_in);
                 return -1;
             }
             continue;
         }
-        WriteLog("brscan5 usb: bulk read error rc=%d (EP 0x83)", rc);
+        WriteLog("brscan5 usb: bulk read error rc=%d (EP 0x%02x)",
+                 rc, u->ep_in);
         return -1;
     }
 }
@@ -260,7 +343,7 @@ brscan5_usb_drain(void *ctx)
         return 0;
     last_data = brscan5_now_ms();
     for (;;) {
-        int rc = usb_bulk_read(this->hScanner->usb, BRSCAN5_EP_IN,
+        int rc = usb_bulk_read(this->hScanner->usb, u->ep_in,
                                (char *)scratch, BRSCAN5_DATA_URB_MAX, 250);
         if (rc > 0) {
             discarded += (size_t)rc;
@@ -291,9 +374,10 @@ brscan5_usb_reset(void *ctx)
 
     if (!this || !this->hScanner || !this->hScanner->usb)
         return 0;
-    WriteLog("brscan5 usb: clear_halt 0x83/0x04 after cancel/error");
-    usb_clear_halt(this->hScanner->usb, BRSCAN5_EP_IN);
-    usb_clear_halt(this->hScanner->usb, BRSCAN5_EP_OUT);
+    WriteLog("brscan5 usb: clear_halt 0x%02x/0x%02x after cancel/error",
+             u->ep_in, u->ep_out);
+    usb_clear_halt(this->hScanner->usb, u->ep_in);
+    usb_clear_halt(this->hScanner->usb, u->ep_out);
     return 0;
 }
 
@@ -371,12 +455,15 @@ brscan5_transport_open(Brother_Scanner *this)
     if (replay_path && replay_path[0])
         return brscan5_replay_open(t, replay_path);
 
-    /* Real USB: hScanner->usb must already be opened+claimed by sane_open. */
+    /* Real USB: hScanner->usb must already be opened+claimed by sane_open.
+     * Endpoints come from the session's device profile. */
     {
         brscan5_usb_t *u = (brscan5_usb_t *)calloc(1, sizeof(*u));
         if (!u)
             return -1;
-        u->this = this;
+        u->this   = this;
+        u->ep_in  = this->br5->profile->ep_in;
+        u->ep_out = this->br5->profile->ep_out;
         t->write = brscan5_usb_write;
         t->read  = brscan5_usb_read;
         t->drain = brscan5_usb_drain;
@@ -386,7 +473,8 @@ brscan5_transport_open(Brother_Scanner *this)
         t->idle_timeout_ms = BRSCAN5_TIMEOUT_CMD;
         t->is_replay = 0;
         t->ctx   = u;
-        WriteLog("brscan5 transport: USB (EP 0x04 OUT / 0x83 IN)");
+        WriteLog("brscan5 transport: USB (EP 0x%02x OUT / 0x%02x IN)",
+                 u->ep_out, u->ep_in);
         return 0;
     }
 }
@@ -457,39 +545,6 @@ brscan5_get_parameters(Brother_Scanner *this, SANE_Parameters *p)
              p->pixels_per_line, p->lines, p->bytes_per_line, p->depth,
              (int)p->format, (s && s->have_real) ? " (real)" : " (est)");
     return SANE_STATUS_GOOD;
-}
-
-void
-brscan5_override_model_config(MODELCONFIG *mc)
-{
-    if (!mc)
-        return;
-    mc->SupportReso.val = 0;
-    mc->SupportReso.bit.bDpi100x100   = TRUE;
-    mc->SupportReso.bit.bDpi150x150   = TRUE;
-    mc->SupportReso.bit.bDpi200x200   = TRUE;
-    mc->SupportReso.bit.bDpi300x300   = TRUE;
-    mc->SupportReso.bit.bDpi400x400   = TRUE;
-    mc->SupportReso.bit.bDpi600x600   = TRUE;
-    mc->SupportReso.bit.bDpi1200x1200 = TRUE;
-    mc->SupportReso.bit.bDpi2400x2400 = FALSE;
-    mc->SupportReso.bit.bDpi4800x4800 = FALSE;
-    mc->SupportReso.bit.bDpi9600x9600 = FALSE;
-
-    mc->SupportScanMode.val = 0;
-    mc->SupportScanMode.bit.bBlackWhite     = TRUE;  /* "Black & White" */
-    mc->SupportScanMode.bit.bErrorDiffusion = FALSE;
-    mc->SupportScanMode.bit.bTrueGray       = TRUE;  /* "True Gray"     */
-    mc->SupportScanMode.bit.b24BitColor     = TRUE;  /* "24bit Color"   */
-    mc->SupportScanMode.bit.b24BitNoCMatch  = FALSE;
-
-    mc->SupportScanSrc.val = 0;
-    mc->SupportScanSrc.bit.FB      = FALSE;
-    mc->SupportScanSrc.bit.ADF     = TRUE;
-    mc->SupportScanSrc.bit.ADF_DUP = FALSE;
-
-    mc->SupportScanAreaWidth  = 215.9;   /* DS-640: letter/legal width  */
-    mc->SupportScanAreaHeight = 355.6;   /* DS-640: letter/legal length */
 }
 
 /* ---- libjpeg decoder ------------------------------------------------- */
@@ -807,6 +862,15 @@ brscan5_open(Brother_Scanner *this)
     this->br5 = (brscan5_session_t *)calloc(1, sizeof(*this->br5));
     if (!this->br5)
         return 0;                       /* FALSE */
+    /* Device profile (endpoints etc.) — keyed by USB vendor+product ID.
+     * The dispatch gate guarantees a profile; fail-safe if not. */
+    this->br5->profile = brscan5_find_profile(this->modelInf.vendorID,
+                                              this->modelInf.productID);
+    if (!this->br5->profile) {
+        free(this->br5);
+        this->br5 = NULL;
+        return 0;
+    }
     this->br5->parser = br5_parser_new(brscan5_on_event, this);
     if (!this->br5->parser) {
         free(this->br5);

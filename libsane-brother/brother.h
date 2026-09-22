@@ -183,7 +183,7 @@ typedef struct Brother_Scanner {
   TOptionValue               aoptVal[NUM_OPTIONS];
 #endif
   const struct brscan5_ops  *ops;		/* dispatch handle: brscan5 vs. 3/4 path */
-  brscan5_session_t         *br5;		/* brscan5 session state (series 5 only) */
+  brscan5_session_t         *br5;		/* brscan5 session state (brscan5 models only) */
   MODELINF                   modelInf;		// �����ץ󤵤줿�ǥХ�������
   MODELCONFIG                modelConfig;       // �����ץ󤵤줿�ǥХ����γƼ��������
 

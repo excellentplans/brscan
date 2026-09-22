@@ -83,8 +83,9 @@ static Brother_Scanner   *pinstFirst;	// �����ץ󤷤��ǥХ���
  *
  * Ops dispatch — brscan5 command layer vs. the existing 3/4 path
  *
- * The single dispatch gate lives in sane_open(): a model with
- * seriesNo == BRSCAN5_SERIES_NO (DS-640) gets brscan5_ops_dispatch,
+ * The single dispatch gate lives in sane_open(): a model with a
+ * brscan5 device profile (brscan5_is_brscan5: keyed by USB product ID;
+ * currently the DS-640) gets brscan5_ops_dispatch,
  * every other model gets the legacy table below, which reproduces the
  * exact pre-dispatch behaviour (identical call sequences, just routed
  * through the ops struct so sane_start/read/cancel are op-agnostic).
@@ -471,10 +472,11 @@ Not support (force causing compile error)
   pdevFirst=NULL;
 
   if (brscan5_replay_active()) {
-      /* Replay mode (BROTHER5_REPLAY set): no USB access at all — the
-       * DS-640 is registered directly (pdev=NULL) so the fixture scan
-       * can be opened without hardware. sane_open skips usb_open for it
-       * and the brscan5 replay transport performs no libusb I/O. */
+      /* Replay mode (BROTHER5_REPLAY set): no USB access at all — every
+       * model with a brscan5 device profile (keyed by USB product ID) is
+       * registered directly (pdev=NULL) so the fixture scan can be opened
+       * without hardware. sane_open skips usb_open for it and the brscan5
+       * replay transport performs no libusb I/O. */
       WriteLog( "<<< sane_init REPLAY mode (no USB enumeration) >>> " );
   } else {
       usb_init();
@@ -492,12 +494,13 @@ Not support (force causing compile error)
 
   nnetdev=get_net_device_num();
   if (brscan5_replay_active()) {
-      /* Register the DS-640 for the replay session. */
+      /* Register every model that has a brscan5 device profile (keyed by
+       * USB vendor+product ID) for the replay session. */
       PMODELINF pModelInf;
       int found = 0;
       for (pModelInf=&modelInfList; pModelInf; pModelInf = pModelInf->next) {
-	  if (pModelInf->vendorID  == SCANNER_VENDOR &&
-	      pModelInf->productID == 0x0468) {
+	  if (brscan5_find_profile(pModelInf->vendorID,
+				   pModelInf->productID) != NULL) {
 	      WriteLog( "<<< sane_init RegisterSaneDev (brscan5;replay0) >>> " );
 	      RegisterSaneDev(NULL,"brscan5;replay0",pModelInf,-1);
 	      found = 1;
@@ -505,7 +508,7 @@ Not support (force causing compile error)
 	  }
       }
       if (!found) {
-	  WriteLog("sane_init REPLAY: DS-640 (04f9:0468) not in model table");
+	  WriteLog("sane_init REPLAY: no brscan5 model in the model table");
 	  return SANE_STATUS_IO_ERROR;
       }
   } else if (!usb_busses && nnetdev==0) {
@@ -670,10 +673,10 @@ sane_open (SANE_String_Const devicename, SANE_Handle *handle)
 
     if (IFTYPE_USB == this->hScanner->device){
 	this->hScanner->net_device_index = -1;
-	/* Replay mode (series 5 only, BROTHER5_REPLAY set): no physical
+	/* Replay mode (brscan5 models only, BROTHER5_REPLAY set): no physical
 	 * device — the brscan5 replay transport does its own fixture I/O
-	 * and must see no USB handle at all. Every other model (and series
-	 * 5 on real hardware) opens+claims interface 1 as before. */
+	 * and must see no USB handle at all. Every other model (and brscan5
+	 * models on real hardware) opens+claims interface 1 as before. */
 	if (brscan5_is_brscan5(&pdev->modelInf) &&
 	    brscan5_replay_active()) {
 	    this->hScanner->usb = NULL;
@@ -709,11 +712,11 @@ sane_open (SANE_String_Const devicename, SANE_Handle *handle)
     this->modelInf.seriesNo = pdev->modelInf.seriesNo;
 
     // �ǥХ��������ץ�
-    /* Single dispatch gate for the DS-640 (brscan5): brscan5_is_brscan5()
-     * selects the brscan5 command layer, every other model keeps the
-     * existing 3/4 path. The brscan5 ops table is defined in
-     * brother_brscan5.h; identification semantics are documented there
-     * (BRSCAN5_SERIES_NO + DS-640 product ID). */
+    /* Single dispatch gate for brscan5: brscan5_is_brscan5() selects the
+     * brscan5 command layer for every model with a brscan5 device
+     * profile (keyed by USB vendor+product ID), every other model keeps
+     * the existing 3/4 path. The brscan5 ops table is defined in
+     * brother_brscan5.h; identification semantics are documented there. */
 #if BRSANESUFFIX == 2
     this->ops = brscan5_is_brscan5(&this->modelInf)
 	? &brscan5_ops_dispatch
@@ -740,11 +743,14 @@ sane_open (SANE_String_Const devicename, SANE_Handle *handle)
     this->modelInf.modelTypeName = pdev->modelInf.modelTypeName;
 
     get_model_config(&this->modelInf, &this->modelConfig);
-    /* T6: the DS-640's model-table seriesNo (14) does not describe this
-     * device — apply the DS-640 feature profile (100-1200 dpi, BW/Gray/
-     * Color, ADF-only) so the SANE options are built from real features. */
-    if (brscan5_is_brscan5(&this->modelInf))
-	brscan5_override_model_config(&this->modelConfig);
+    /* brscan5: the ini's seriesNo only feeds the legacy default feature
+     * tables (get_model_config); the real feature profile comes from the
+     * brscan5 device profile, keyed by USB product ID. No-op for models
+     * without a profile. */
+    brscan5_apply_model_profile(
+        brscan5_find_profile(this->modelInf.vendorID,
+                             this->modelInf.productID),
+        &this->modelConfig);
 
     GetLogSwitch( this );
 

@@ -31,7 +31,7 @@ Two parallel tables:
 | `MUST_CONVERT_MODEL 10` | `brother_modelinf.h:92` | **The central switch.** |
 | `ChangeEndpoint[]` | `brother_modelinf.c:869` | List of series with an alternative endpoint (`{AL_FB_DCP, AL_DUPLEX, L4CFB, GENERIC_YCBCR_MODEL_2, _NOADF_2, _NOFB_2, _NOADF}`). Comment: `DCP-1510 = series 14`. |
 | `ANOTHERENDPOINT 7` | `brother_modelinf.h` | Length of the list above. |
-| `GENERIC_YCBCR_NOADF 14` | `brother_modelinf.h:81` | SeriesNo of the DCP-1510 / DS-640 family. |
+| `GENERIC_YCBCR_NOADF 14` | `brother_modelinf.h:81` | SeriesNo of the DCP-1510 family. The DS-640's ini entry uses seriesNo 5, which only feeds the legacy default feature tables — brscan5 identity is keyed by USB product ID (brscan5 profile table), not seriesNo. |
 | `BHMINI_FB_ONLY 10` | `brother_modelinf.h:128` (SUFFIX 1 only) | brscan3 series used in the DCP-1510 workaround. |
 
 **brscan4-vs-brscan3 switch in the data path** (`brother_scanner.c:1007-1012`,
@@ -46,7 +46,10 @@ inside the brscan4 `PageScan` :909):
         rc = ReadNonFixedData( this->hScanner, lpReadBuf, nReadSize, READ_TIMEOUT, this->modelInf.seriesNo );
 ```
 
-→ For the DS-640 (seriesNo 14 ≥ 10) the brscan4 record-read path runs.
+→ For seriesNo 14 (DCP-1510 family) the brscan4 record-read path runs.
+The DS-640's ini entry is seriesNo 5 (< 10) and it is dispatched to the
+brscan5 layer before this path anyway (brscan5 profile by USB product
+ID), so this switch never applies to it.
 
 Further seriesNo locations:
 - `sane_open` sets `this->modelInf.seriesNo = pdev->modelInf.seriesNo` (`brother.c:616`);
@@ -129,7 +132,7 @@ Helper module `brother_color.c`/`brother_color.h`:
 
 | Module | `libsane-brother/brother_brscan5.c` + `.h` (parallel, NEW) |
 |---|---|
-| Dispatch gate | **exactly one**, in `brother.c` `sane_open` (before `OpenDevice`): `seriesNo == BRSCAN5_SERIES_NO` (5) → `&brscan5_ops_dispatch`, else → `&brscan5_ops_legacy` (static table, byte-/sequence-identical behavior to the previous 3/4 code) |
+| Dispatch gate | **exactly one**, in `brother.c` `sane_open` (before `OpenDevice`): a model with a brscan5 device profile (`brscan5_is_brscan5`, keyed by USB vendor+product ID; originally T3's `seriesNo == 5`) → `&brscan5_ops_dispatch`, else → `&brscan5_ops_legacy` (static table, byte-/sequence-identical behavior to the previous 3/4 code) |
 | Ops struct | `struct brscan5_ops` in `brother_brscan5.h`: `open/start/read/cancel/close`; global dispatch handle `brscan5_ops_dispatch` in `brother.c` |
 | Start stub | `brscan5_start` performs Q→QDI→CKD→SSP→XSC (EP 0x04 OUT / 0x83 IN); CKD `00 02` resp. XSC `90 00` → `SANE_STATUS_NO_DOCS` |
 | read/cancel | placeholders (T5-T7) |
@@ -152,7 +155,7 @@ Helper module `brother_color.c`/`brother_color.h`:
 
 | Most important switch | `MUST_CONVERT_MODEL` (`brother_modelinf.h:92`), queried at `brother_scanner.c:1008` |
 |---|---|
-| DS-640 model entry | `0x0468,5,2,"DS-640"` in `data/Brsane.ini` (seriesNo 5 — NOT 14, see above) |
+| DS-640 model entry | `0x0468,5,2,"DS-640"` in `data/Brsane.ini` (the seriesNo feeds only the legacy default feature tables; brscan5 identity is keyed by USB product ID via the brscan5 profile table) |
 | Endpoint switch | `ChangeEndpoint[]` (`brother_modelinf.c:869`), used in `OpenDevice` :348-351, `ReadDeviceData` :587-592, `in_ep` fallback `usb_set_configuration_or_reset_toggle` :1116 |
 | USB layer | `brother_devaccs.c` (`ReadNonFixedData` :708 / `WriteDeviceCommand` :993) — replaced for brscan5 by fixed EPs in `brother_brscan5.c` |
 | Framing | `brother_brscan4.c` (`brscan4_read_next_record` :124) — for brscan5 URB-boundary-driven (`brscan5-protocol.md` §4) |
