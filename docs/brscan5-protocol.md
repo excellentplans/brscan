@@ -237,7 +237,7 @@ the device delivers **NO JPEG**. The page data is a sequence of
   line count — the records carry the real geometry).
 - **Each line decodes to exactly `(width+7)/8` bytes** (300 dpi/2550 px → 319 B;
   verified 3491/3491 lines of exactly 319 B in the T8c chroot oracle capture;
-  600 dpi correspondingly (5100+7)/8 = 639 B/line).
+  600 dpi correspondingly (5100+7)/8 = 638 B/line).
 - **Packbits (vendor semantics, libbrscandec FUN_001063f3):** control byte `< 0x80`
   → c+1 literals; `> 0x80` → repeat the next byte (257-c)×; `0x80` → skip.
 - **Bit convention: bit 1 = BLACK** (white line = 0x00 repetitions) — identical

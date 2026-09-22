@@ -431,6 +431,7 @@ int main(void)
     test_dyn_encoders_default();
     test_dyn_encoders_variants();
     test_t8b_reference_vectors();
+    test_t8c_byte_exact_variants();
     test_response_readers();
     test_control_dance();
 
