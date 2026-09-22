@@ -92,7 +92,10 @@ int parse_and_add_model_info(char *line){
   sane_model_info *current_t;
   static int  def_vid = 0x4f9;
   static int  def_int = 0xffff;
-  static char def_str[2] ="";
+  /* get_1_element() copies 4-byte int defaults via *(int *)def — the
+   * string default must be at least 4 bytes long (was [2]: read past the
+   * global, caught by AddressSanitizer in the T6 ASan test build). */
+  static char def_str[4] ="";
   reform_line(line);
   current_t = (sane_model_info *)calloc(sizeof(sane_model_info),1);
 

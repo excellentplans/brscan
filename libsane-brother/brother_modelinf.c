@@ -1479,7 +1479,11 @@ int SectionNameCheck(LPCTSTR lpAppName, char *buf)
 				f_char  = tolower(*(buf+i));		/* convert to lower case */
 				lp_char = tolower(*(lpAppName+count));	/* convert to lower case */
 				if(f_char != lp_char)		break;
-				else if(*(buf+i)== NULL_C)	res = FIND;
+				/* M-LNX bug: without this break the loop keeps
+				 * comparing past both strings' NUL terminators
+				 * (global-buffer-overflow, caught by
+				 * AddressSanitizer in the T6 ASan test build). */
+				else if(*(buf+i)== NULL_C){ res = FIND; break; }
 			}
 		}
 	}
@@ -1524,10 +1528,15 @@ int KeyNameCheckInt(LPCTSTR lpKeyName, char *buf, int *result)
 				{
 					break;
 				}
+				/* M-LNX bug: without this break the loop keeps
+				 * comparing past both strings' NUL terminators
+				 * (global-buffer-overflow, caught by
+				 * AddressSanitizer in the T6 ASan test build). */
 				else if(*(buf+i)== NULL_C)
 				{
 					*result = atoi(keyNameEnd+1);		/* convert Key value to integer */
 					res = FIND;
+					break;
 				}
 			}
 		}

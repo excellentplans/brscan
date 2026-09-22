@@ -348,7 +348,7 @@ OpenDevice(usb_dev_handle *hScanner, int seriesNo)
 	  nEndPoint = 0x84;
 	  for(i=0; i < ANOTHERENDPOINT; i++){
 	    if(seriesNo == ChangeEndpoint[i]){
-	      nEndPoint = 0x85;
+	      nEndPoint = 0x83;
 	      break;
 	    }
 	  }
@@ -357,7 +357,7 @@ OpenDevice(usb_dev_handle *hScanner, int seriesNo)
 
 	WriteLog( "Set EndPoint = %d", nEndPoint) ;
 	  //if(seriesNo == L4CFB ||seriesNo == AL_FB_DCP )
-	  //nEndPoint = 0x85;
+	  //nEndPoint = 0x83;
 	  //else
 	  //nEndPoint = 0x84;
 
@@ -587,14 +587,14 @@ ReadDeviceData( usb_dev_handle *hScanner, LPSTR lpRxBuffer, int nReadSize, int s
 	    nEndPoint = 0x84;
 	    for(i=0; i < ANOTHERENDPOINT; i++){
 	      if(seriesNo == ChangeEndpoint[i]){
-		nEndPoint = 0x85;
+		nEndPoint = 0x83;
 		break;
 	      }
 	    }
 	  }
 	  /*
 	      if(seriesNo == L4CFB || seriesNo == AL_FB_DCP )
-	      nEndPoint = 0x85;
+	      nEndPoint = 0x83;
 	      else
 	      nEndPoint = 0x84;
 	  */
@@ -1113,7 +1113,7 @@ int  usb_set_configuration_or_reset_toggle(
   errornum = usb_set_configuration(this->hScanner->usb, configuration);
 
   in_ep = this->hScanner->usb_r_ep;
-  if (in_ep < 0x80 || in_ep > 0xff) in_ep = 0x85;
+  if (in_ep < 0x80 || in_ep > 0xff) in_ep = 0x83;
   int rc_in = usb_clear_halt(this->hScanner->usb, in_ep);
 
   out_ep = this->hScanner->usb_w_ep;

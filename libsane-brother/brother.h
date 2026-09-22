@@ -114,54 +114,54 @@ extern TDevice *g_pdev;
 
 
 //
-// UI¡ÊFrontend¡ËÀßÄê
+// UIï¿½ï¿½Frontendï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 //
 typedef struct tagUISETTING {
-	WORD          wResoType;		// ²òÁüÅÙ¥¿¥¤¥×
-	WORD          wColorType;		// ¥«¥é¡¼¥¿¥¤¥×
-	int           nBrightness;		// BrightnessÀßÄê
-	int           nContrast;		// ContrastÀßÄê
-	RESOLUTION    UserSelect;		// ÁªÂò¤µ¤ì¤¿²òÁüÅÙ
-	AREARECT      ScanAreaMm;		// ¥¹¥­¥ã¥óÈÏ°Ï»ØÄê¡Ê0.1mmÃ±°Ì¡Ë
-	AREARECT      ScanAreaDot;		// ¥¹¥­¥ã¥óÈÏ°Ï»ØÄê¡ÊdotÃ±°Ì¡Ë
-	RESOLIST      ResoList;			// UI¾å¤Î²òÁüÅÙÀßÄê¹àÌÜ¥ê¥¹¥È
-	SCANMODELIST  ScanModeList;		// UI¾å¤Î¥¹¥­¥ã¥ó¥â¡¼¥ÉÀßÄê¹àÌÜ¥ê¥¹¥È
-	SCANSRCLIST   ScanSrcList;		// UI¾å¤Î¥¹¥­¥ã¥ó¥½¡¼¥¹ÀßÄê¹àÌÜ¥ê¥¹¥È
-	int           nSrcType;			// 06/02/28  ÁªÂò¤µ¤ì¤¿¥¹¥­¥ã¥ó¥½¡¼¥¹
+	WORD          wResoType;		// ï¿½ï¿½ï¿½ï¿½ï¿½Ù¥ï¿½ï¿½ï¿½ï¿½ï¿½
+	WORD          wColorType;		// ï¿½ï¿½ï¿½é¡¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	int           nBrightness;		// Brightnessï¿½ï¿½ï¿½ï¿½
+	int           nContrast;		// Contrastï¿½ï¿½ï¿½ï¿½
+	RESOLUTION    UserSelect;		// ï¿½ï¿½ï¿½ò¤µ¤ì¤¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	AREARECT      ScanAreaMm;		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï°Ï»ï¿½ï¿½ï¿½ï¿½0.1mmÃ±ï¿½Ì¡ï¿½
+	AREARECT      ScanAreaDot;		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï°Ï»ï¿½ï¿½ï¿½ï¿½dotÃ±ï¿½Ì¡ï¿½
+	RESOLIST      ResoList;			// UIï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ü¥ê¥¹ï¿½ï¿½
+	SCANMODELIST  ScanModeList;		// UIï¿½ï¿½Î¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½â¡¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ü¥ê¥¹ï¿½ï¿½
+	SCANSRCLIST   ScanSrcList;		// UIï¿½ï¿½Î¥ï¿½ï¿½ï¿½ï¿½ï¿½ó¥½¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ü¥ê¥¹ï¿½ï¿½
+	int           nSrcType;			// 06/02/28  ï¿½ï¿½ï¿½ò¤µ¤ì¤¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ó¥½¡ï¿½ï¿½ï¿½
 } UISETTING, *LPUISETTING;
 
 //
-// ¥¹¥­¥ã¥ó»þ¤ÎÀßÄê¾ðÊó¡¿¥¹¥­¥ã¥ó¥Ñ¥é¥á¡¼¥¿
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ó¡¿¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¥ï¿½á¡¼ï¿½ï¿½
 //
 typedef struct tagSCANINFO {
-	RESOLUTION  UserSelect;			// ÁªÂò¤µ¤ì¤¿²òÁüÅÙ
-	AREARECT    ScanAreaMm;			// ¥¹¥­¥ã¥óÈÏ°Ï»ØÄê¡ÊmmÃ±°Ì¡Ë
-	AREARECT    ScanAreaDot;		// ¥¹¥­¥ã¥óÈÏ°Ï»ØÄê¡ÊdotÃ±°Ì¡Ë
-	AREASIZE    ScanAreaSize;		// ÆÉ¤ß¼è¤êÈÏ°Ï¡Ê¥É¥Ã¥È¿ô¡Ë
-	AREASIZE    ScanAreaByte;		// ÆÉ¤ß¼è¤êÈÏ°Ï¡Ê¥Ð¥¤¥È¿ô¡Ë
+	RESOLUTION  UserSelect;			// ï¿½ï¿½ï¿½ò¤µ¤ì¤¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	AREARECT    ScanAreaMm;			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï°Ï»ï¿½ï¿½ï¿½ï¿½mmÃ±ï¿½Ì¡ï¿½
+	AREARECT    ScanAreaDot;		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï°Ï»ï¿½ï¿½ï¿½ï¿½dotÃ±ï¿½Ì¡ï¿½
+	AREASIZE    ScanAreaSize;		// ï¿½É¤ß¼ï¿½ï¿½ï¿½Ï°Ï¡Ê¥É¥Ã¥È¿ï¿½ï¿½ï¿½
+	AREASIZE    ScanAreaByte;		// ï¿½É¤ß¼ï¿½ï¿½ï¿½Ï°Ï¡Ê¥Ð¥ï¿½ï¿½È¿ï¿½ï¿½ï¿½
 } SCANINFO, *LPSCANINFO;
 
 typedef struct TScanDec {
-  void              *hScanDec;               // °µ½Ì¥Ç¡¼¥¿Å¸³«¥é¥¤¥Ö¥é¥ê¤Î¥Ï¥ó¥É¥ë
-  SCANDECOPEN        lpfnScanDecOpen;        // °µ½Ì¥Ç¡¼¥¿Å¸³«¥é¥¤¥Ö¥é¥ê¤Î¥ª¡¼¥×¥ó´Ø¿ô
-  SCANDECSETTBL      lpfnScanDecSetTbl;      // °µ½Ì¥Ç¡¼¥¿Å¸³«¥é¥¤¥Ö¥é¥ê¤Î¥Æ¡¼¥Ö¥ë¥»¥Ã¥È´Ø¿ô
-  SCANDECPAGESTART   lpfnScanDecPageStart;   // °µ½Ì¥Ç¡¼¥¿Å¸³«¥é¥¤¥Ö¥é¥ê¤Î³«»Ï½èÍý´Ø¿ô
-  SCANDECWRITE       lpfnScanDecWrite;       // °µ½Ì¥Ç¡¼¥¿Å¸³«¥é¥¤¥Ö¥é¥ê¤Î½ñ¤­¹þ¤ß´Ø¿ô
-  SCANDECPAGEEND     lpfnScanDecPageEnd;     // °µ½Ì¥Ç¡¼¥¿Å¸³«¥é¥¤¥Ö¥é¥ê¤Î½ªÎ»½èÍý´Ø¿ô
-  SCANDECCLOSE       lpfnScanDecClose;       // °µ½Ì¥Ç¡¼¥¿Å¸³«¥é¥¤¥Ö¥é¥ê¤Î¥¯¥í¡¼¥º´Ø¿ô
+  void              *hScanDec;               // ï¿½ï¿½ï¿½Ì¥Ç¡ï¿½ï¿½ï¿½Å¸ï¿½ï¿½ï¿½é¥¤ï¿½Ö¥ï¿½ï¿½Î¥Ï¥ï¿½É¥ï¿½
+  SCANDECOPEN        lpfnScanDecOpen;        // ï¿½ï¿½ï¿½Ì¥Ç¡ï¿½ï¿½ï¿½Å¸ï¿½ï¿½ï¿½é¥¤ï¿½Ö¥ï¿½ï¿½Î¥ï¿½ï¿½ï¿½ï¿½×¥ï¿½Ø¿ï¿½
+  SCANDECSETTBL      lpfnScanDecSetTbl;      // ï¿½ï¿½ï¿½Ì¥Ç¡ï¿½ï¿½ï¿½Å¸ï¿½ï¿½ï¿½é¥¤ï¿½Ö¥ï¿½ï¿½Î¥Æ¡ï¿½ï¿½Ö¥ë¥»ï¿½Ã¥È´Ø¿ï¿½
+  SCANDECPAGESTART   lpfnScanDecPageStart;   // ï¿½ï¿½ï¿½Ì¥Ç¡ï¿½ï¿½ï¿½Å¸ï¿½ï¿½ï¿½é¥¤ï¿½Ö¥ï¿½ï¿½Î³ï¿½ï¿½Ï½ï¿½ï¿½ï¿½ï¿½Ø¿ï¿½
+  SCANDECWRITE       lpfnScanDecWrite;       // ï¿½ï¿½ï¿½Ì¥Ç¡ï¿½ï¿½ï¿½Å¸ï¿½ï¿½ï¿½é¥¤ï¿½Ö¥ï¿½ï¿½Î½ñ¤­¹ï¿½ï¿½ß´Ø¿ï¿½
+  SCANDECPAGEEND     lpfnScanDecPageEnd;     // ï¿½ï¿½ï¿½Ì¥Ç¡ï¿½ï¿½ï¿½Å¸ï¿½ï¿½ï¿½é¥¤ï¿½Ö¥ï¿½ï¿½Î½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½Ø¿ï¿½
+  SCANDECCLOSE       lpfnScanDecClose;       // ï¿½ï¿½ï¿½Ì¥Ç¡ï¿½ï¿½ï¿½Å¸ï¿½ï¿½ï¿½é¥¤ï¿½Ö¥ï¿½ï¿½Î¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø¿ï¿½
 } TScanDec;
 
 
-// DSCMATCH.C¤ËÄêµÁ¤µ¤ì¤Æ¤¤¤ë³°ÉôÊÑ¿ô¤ò¹½Â¤ÂÎ¤È¤·¤ÆÄêµÁ
+// DSCMATCH.Cï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ¤ï¿½ï¿½ë³°ï¿½ï¿½ï¿½Ñ¿ï¿½ï¿½ï¿½Â¤ï¿½Î¤È¤ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 typedef struct TCorlorMATCH {
-  void              *hColorMatch;           // ¥«¥é¡¼¥Þ¥Ã¥Á¥ó¥°¥é¥¤¥Ö¥é¥ê¤Î¥Ï¥ó¥É¥ë
-  COLORINIT          lpfnColorMatchingInit; // ¥«¥é¡¼¥Þ¥Ã¥Á¥ó¥°¥é¥¤¥Ö¥é¥ê¤Î½é´ü²½´Ø¿ô
-  COLOREND           lpfnColorMatchingEnd;  // ¥«¥é¡¼¥Þ¥Ã¥Á¥ó¥°¥é¥¤¥Ö¥é¥ê¤Î½ªÎ»´Ø¿ô
-  COLORMATCHING      lpfnColorMatchingFnc;  // ¥«¥é¡¼¥Þ¥Ã¥Á¥ó¥°¥é¥¤¥Ö¥é¥ê¤Î¼Â¹Ô´Ø¿ô
-  int                nColorMatchStatus;     // ¥«¥é¡¼¥Þ¥Ã¥Á¥ó¥°¥¹¥Æ¡¼¥¿¥¹
-  char               szTwdsColorMatch[ MAX_PATH ]; // ¥«¥é¡¼¥Þ¥Ã¥Á¥ó¥°¥é¥¤¥Ö¥é¥ê¤Î¥Õ¥ë¥Ñ¥¹Ì¾
-  char               szLutFilePathName[ MAX_PATH ];// ¥«¥é¡¼¥Þ¥Ã¥Á¥ó¥°¤ÎLUT¥Õ¥¡¥¤¥ë¥Õ¥ë¥Ñ¥¹Ì¾
-  void              *hGrayTbl;              // GrayTable¤Î¥Ï¥ó¥É¥ë
+  void              *hColorMatch;           // ï¿½ï¿½ï¿½é¡¼ï¿½Þ¥Ã¥ï¿½ï¿½ó¥°¥é¥¤ï¿½Ö¥ï¿½ï¿½Î¥Ï¥ï¿½É¥ï¿½
+  COLORINIT          lpfnColorMatchingInit; // ï¿½ï¿½ï¿½é¡¼ï¿½Þ¥Ã¥ï¿½ï¿½ó¥°¥é¥¤ï¿½Ö¥ï¿½ï¿½Î½ï¿½ï¿½ï¿½ï¿½ï¿½Ø¿ï¿½
+  COLOREND           lpfnColorMatchingEnd;  // ï¿½ï¿½ï¿½é¡¼ï¿½Þ¥Ã¥ï¿½ï¿½ó¥°¥é¥¤ï¿½Ö¥ï¿½ï¿½Î½ï¿½Î»ï¿½Ø¿ï¿½
+  COLORMATCHING      lpfnColorMatchingFnc;  // ï¿½ï¿½ï¿½é¡¼ï¿½Þ¥Ã¥ï¿½ï¿½ó¥°¥é¥¤ï¿½Ö¥ï¿½ï¿½Î¼Â¹Ô´Ø¿ï¿½
+  int                nColorMatchStatus;     // ï¿½ï¿½ï¿½é¡¼ï¿½Þ¥Ã¥ï¿½ï¿½ó¥°¥ï¿½ï¿½Æ¡ï¿½ï¿½ï¿½ï¿½ï¿½
+  char               szTwdsColorMatch[ MAX_PATH ]; // ï¿½ï¿½ï¿½é¡¼ï¿½Þ¥Ã¥ï¿½ï¿½ó¥°¥é¥¤ï¿½Ö¥ï¿½ï¿½Î¥Õ¥ï¿½Ñ¥ï¿½Ì¾
+  char               szLutFilePathName[ MAX_PATH ];// ï¿½ï¿½ï¿½é¡¼ï¿½Þ¥Ã¥ï¿½ï¿½ó¥°¤ï¿½LUTï¿½Õ¥ï¿½ï¿½ï¿½ï¿½ï¿½Õ¥ï¿½Ñ¥ï¿½Ì¾
+  void              *hGrayTbl;              // GrayTableï¿½Î¥Ï¥ï¿½É¥ï¿½
 } TCorlorMATCH;
 
 typedef struct tagDEVHANDLE {
@@ -174,35 +174,39 @@ typedef struct tagDEVHANDLE {
 } dev_handle;
 
 
+struct brscan5_ops;	/* ops dispatch handle â€” see brother_brscan5.h */
+typedef struct brscan5_session brscan5_session_t;	/* brscan5 session â€” see brother_brscan5.h */
 typedef struct Brother_Scanner {
 #ifndef INSANE_VERSION
   struct Brother_Scanner    *pNext;
   SANE_Option_Descriptor     aoptDesc[NUM_OPTIONS];
   TOptionValue               aoptVal[NUM_OPTIONS];
 #endif
-  MODELINF                   modelInf;		// ¥ª¡¼¥×¥ó¤µ¤ì¤¿¥Ç¥Ð¥¤¥¹¾ðÊó
-  MODELCONFIG                modelConfig;       // ¥ª¡¼¥×¥ó¤µ¤ì¤¿¥Ç¥Ð¥¤¥¹¤Î³Æ¼ïÀßÄê¾ðÊó
+  const struct brscan5_ops  *ops;		/* dispatch handle: brscan5 vs. 3/4 path */
+  brscan5_session_t         *br5;		/* brscan5 session state (series 5 only) */
+  MODELINF                   modelInf;		// ï¿½ï¿½ï¿½ï¿½ï¿½×¥ó¤µ¤ì¤¿ï¿½Ç¥Ð¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+  MODELCONFIG                modelConfig;       // ï¿½ï¿½ï¿½ï¿½ï¿½×¥ó¤µ¤ì¤¿ï¿½Ç¥Ð¥ï¿½ï¿½ï¿½ï¿½Î³Æ¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
-  dev_handle                 *hScanner;		// USB¥¹¥­¥ã¥Ê¤Î¥Ï¥ó¥É¥ë
+  dev_handle                 *hScanner;		// USBï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¤Î¥Ï¥ï¿½É¥ï¿½
 
   UISETTING                  uiSetting;         //
-  TCorlorMATCH               cmatch;            // ¥«¥é¡¼¥Þ¥Ã¥Á¥ó¥°ÍÑ¹½Â¤ÂÎ
-  TScanDec                   scanDec;           // °µ½Ì¥Ç¡¼¥¿Å¸³«ÍÑ¹½Â¤ÂÎ
-  SCANINFO                   scanInfo;          // ¥¹¥­¥ã¥ó»þ¤Î¾ðÊó
-  DEVSCANINFO                devScanInfo;       // ¥Ç¥Ð¥¤¥¹¤Î¥¹¥­¥ã¥ó¾ðÊó
+  TCorlorMATCH               cmatch;            // ï¿½ï¿½ï¿½é¡¼ï¿½Þ¥Ã¥ï¿½ï¿½ï¿½ï¿½Ñ¹ï¿½Â¤ï¿½ï¿½
+  TScanDec                   scanDec;           // ï¿½ï¿½ï¿½Ì¥Ç¡ï¿½ï¿½ï¿½Å¸ï¿½ï¿½ï¿½Ñ¹ï¿½Â¤ï¿½ï¿½
+  SCANINFO                   scanInfo;          // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¾ï¿½ï¿½ï¿½
+  DEVSCANINFO                devScanInfo;       // ï¿½Ç¥Ð¥ï¿½ï¿½ï¿½ï¿½Î¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
   MFCMODELINFO               mfcModelInfo;      //
   MFCDEVICEHEAD              mfcDevInfoHeader;  //
   MFCDEVICEINFO              mfcDeviceInfo;     //
-  TScanState                 scanState;         // ¥¹¥­¥ã¥ó»þ¤Î¥¹¥Æ¡¼¥¿¥¹¾ðÊó
+  TScanState                 scanState;         // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¥ï¿½ï¿½Æ¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 } Brother_Scanner;
 
 #define  usb_dev_handle   dev_handle
 
 // from DS_INFO.H
 //
-// ²òÁüÅÙ¥¿¥¤¥×ÍÑ¥·¥ó¥Ü¥ëÄêµÁ
+// ï¿½ï¿½ï¿½ï¿½ï¿½Ù¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¥ï¿½ï¿½ï¿½Ü¥ï¿½ï¿½ï¿½ï¿½
 //
-#define RESOTYPECNT   13				// ²òÁüÅÙ¥¿¥¤¥×Áí¿ô
+#define RESOTYPECNT   13				// ï¿½ï¿½ï¿½ï¿½ï¿½Ù¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 #define RES100X100     0				//  100 x  100 dpi
 #define RES150X150     1				//  150 x  150 dpi
 #define RES200X100     2				//  200 x  100 dpi
@@ -216,81 +220,81 @@ typedef struct Brother_Scanner {
 #define RES2400X2400  10				// 2400 x 2400 dpi
 #define RES4800X4800  11				// 4800 x 4800 dpi
 #define RES9600X9600  12				// 9600 x 9600 dpi
-#define DEF_RESOTYPE  RES200X200		// ²òÁüÅÙ¥¿¥¤¥×½é´üÃÍ
+#define DEF_RESOTYPE  RES200X200		// ï¿½ï¿½ï¿½ï¿½ï¿½Ù¥ï¿½ï¿½ï¿½ï¿½×½ï¿½ï¿½ï¿½ï¿½
 
 //
-// ¥«¥é¡¼¥¿¥¤¥×ÍÑ¥·¥ó¥Ü¥ëÄêµÁ
+// ï¿½ï¿½ï¿½é¡¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¥ï¿½ï¿½ï¿½Ü¥ï¿½ï¿½ï¿½ï¿½
 //
-#define COLORTYPECNT   7				// ¥«¥é¡¼¥¿¥¤¥×Áí¿ô
+#define COLORTYPECNT   7				// ï¿½ï¿½ï¿½é¡¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 #define COLOR_BW       0				// Black & White
 #define COLOR_ED       1				// Error Diffusion Gray
 #define COLOR_DTH      2				// Dithered Gray
 #define COLOR_TG       3				// True Gray
 #define COLOR_256      4				// 256 Color
 #define COLOR_FUL      5				// 24bit Full Color
-#define COLOR_FUL_NOCM 6				// 24bit Full Color(ColorMatch¤Ê¤·)
-#define DEF_COLORTYPE  COLOR_BW			// ¥«¥é¡¼¥¿¥¤¥×½é´üÃÍ
+#define COLOR_FUL_NOCM 6				// 24bit Full Color(ColorMatchï¿½Ê¤ï¿½)
+#define DEF_COLORTYPE  COLOR_BW			// ï¿½ï¿½ï¿½é¡¼ï¿½ï¿½ï¿½ï¿½ï¿½×½ï¿½ï¿½ï¿½ï¿½
 
 //
-// ¥¹¥­¥ã¥ó¥½¡¼¥¹ÍÑ¥·¥ó¥Ü¥ëÄêµÁ
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ó¥½¡ï¿½ï¿½ï¿½ï¿½Ñ¥ï¿½ï¿½ï¿½Ü¥ï¿½ï¿½ï¿½ï¿½
 //
-//06/02/28 Duplex¥¹¥­¥ã¥óÍÑ¤ËSCANSRC_ADF_DUPÄÉ²Ã
-#define SCANSRCCNT      3				// ¥¹¥­¥ã¥ó¥½¡¼¥¹Áí¿ô
+//06/02/28 Duplexï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¤ï¿½SCANSRC_ADF_DUPï¿½É²ï¿½
+#define SCANSRCCNT      3				// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ó¥½¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 #define SCANSRC_FB      0				// Flatbed
 #define SCANSRC_ADF     1				// Automatic document feeder
 #define SCANSRC_ADF_DUP 2				// ADF Duplex
-#define DEF_SCANSRC    SCANSRC_ADF			// ¥¹¥­¥ã¥ó¥½¡¼¥¹½é´üÃÍ
+#define DEF_SCANSRC    SCANSRC_ADF			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ó¥½¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
 //
-// Brightness/ContrastÍÑ¥·¥ó¥Ü¥ëÄêµÁ
+// Brightness/Contrastï¿½Ñ¥ï¿½ï¿½ï¿½Ü¥ï¿½ï¿½ï¿½ï¿½
 //
-#define DEF_BRIGHTNESS     0			// Brightness½é´üÃÍ
-#define MIN_BRIGHTNESS   -50			// BrightnessºÇ¾®ÃÍ
-#define MAX_BRIGHTNESS    50			// BrightnessºÇÂçÃÍ
-#define DEF_CONTRAST       0			// Contrast½é´üÃÍ
-#define MIN_CONTRAST     -50			// ContrastºÇ¾®ÃÍ
-#define MAX_CONTRAST      50			// ContrastºÇÂçÃÍ
+#define DEF_BRIGHTNESS     0			// Brightnessï¿½ï¿½ï¿½ï¿½ï¿½
+#define MIN_BRIGHTNESS   -50			// Brightnessï¿½Ç¾ï¿½ï¿½ï¿½
+#define MAX_BRIGHTNESS    50			// Brightnessï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define DEF_CONTRAST       0			// Contrastï¿½ï¿½ï¿½ï¿½ï¿½
+#define MIN_CONTRAST     -50			// Contrastï¿½Ç¾ï¿½ï¿½ï¿½
+#define MAX_CONTRAST      50			// Contrastï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
 //
-// ¸¶¹Æ¥µ¥¤¥º¥¿¥¤¥×ÍÑ¥·¥ó¥Ü¥ëÄêµÁ
+// ï¿½ï¿½ï¿½Æ¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¥ï¿½ï¿½ï¿½Ü¥ï¿½ï¿½ï¿½ï¿½
 //
-#define PAPERTYPECNT   8				// ¸¶¹Æ¥µ¥¤¥º¥¿¥¤¥×Áí¿ô
+#define PAPERTYPECNT   8				// ï¿½ï¿½ï¿½Æ¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 #define PAPER_A4       0				// A4
 #define PAPER_B5       1				// B5
 #define PAPER_LETTER   2				// US-Letter
 #define PAPER_LEGAL    3				// Legal
 #define PAPER_A5       4				// A5
 #define PAPER_EXEC     5				// Executive
-#define PAPER_BCARD    6				// Ì¾»É
-#define PAPER_USER     7				// ¥æ¡¼¥¶¡¼»ØÄê
+#define PAPER_BCARD    6				// Ì¾ï¿½ï¿½
+#define PAPER_USER     7				// ï¿½æ¡¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
 //
-// ¸¶¹Æ¥µ¥¤¥º(0.1mmÃ±°Ì)ÍÑ¥·¥ó¥Ü¥ëÄêµÁ
+// ï¿½ï¿½ï¿½Æ¥ï¿½ï¿½ï¿½ï¿½ï¿½(0.1mmÃ±ï¿½ï¿½)ï¿½Ñ¥ï¿½ï¿½ï¿½Ü¥ï¿½ï¿½ï¿½ï¿½
 //
-#define PSIZE_A4_X      2100			// A4Éý(0.1mmÃ±°Ì)
-#define PSIZE_A4_Y      2970			// A4Ä¹¤µ(0.1mmÃ±°Ì)
-#define PSIZE_B5_X      1820			// B5Éý(0.1mmÃ±°Ì)
-#define PSIZE_B5_Y      2570			// B5Ä¹¤µ(0.1mmÃ±°Ì)
-#define PSIZE_LETTER_X  2159			// LetterÉý(0.1mmÃ±°Ì)
-#define PSIZE_LETTER_Y  2794			// LetterÄ¹¤µ(0.1mmÃ±°Ì)
-#define PSIZE_LEGAL_X   2159			// LegalÉý(0.1mmÃ±°Ì)
-#define PSIZE_LEGAL_Y   3556			// LegalÄ¹¤µ(0.1mmÃ±°Ì)
-#define PSIZE_A5_X      1480			// A5Éý(0.1mmÃ±°Ì)
-#define PSIZE_A5_Y      2100			// A5Ä¹¤µ(0.1mmÃ±°Ì)
-#define PSIZE_EXEC_X    1842			// ExecutiveÉý(0.1mmÃ±°Ì)
-#define PSIZE_EXEC_Y    2667			// ExecutiveÄ¹¤µ(0.1mmÃ±°Ì)
-#define PSIZE_BCARD_X    900			// Ì¾»ÉÉý(0.1mmÃ±°Ì)
-#define PSIZE_BCARD_Y    600			// Ì¾»ÉÄ¹¤µ(0.1mmÃ±°Ì)
-#define PSIZE_12INCH    3048			// 12inch(0.1mmÃ±°Ì)
+#define PSIZE_A4_X      2100			// A4ï¿½ï¿½(0.1mmÃ±ï¿½ï¿½)
+#define PSIZE_A4_Y      2970			// A4Ä¹ï¿½ï¿½(0.1mmÃ±ï¿½ï¿½)
+#define PSIZE_B5_X      1820			// B5ï¿½ï¿½(0.1mmÃ±ï¿½ï¿½)
+#define PSIZE_B5_Y      2570			// B5Ä¹ï¿½ï¿½(0.1mmÃ±ï¿½ï¿½)
+#define PSIZE_LETTER_X  2159			// Letterï¿½ï¿½(0.1mmÃ±ï¿½ï¿½)
+#define PSIZE_LETTER_Y  2794			// LetterÄ¹ï¿½ï¿½(0.1mmÃ±ï¿½ï¿½)
+#define PSIZE_LEGAL_X   2159			// Legalï¿½ï¿½(0.1mmÃ±ï¿½ï¿½)
+#define PSIZE_LEGAL_Y   3556			// LegalÄ¹ï¿½ï¿½(0.1mmÃ±ï¿½ï¿½)
+#define PSIZE_A5_X      1480			// A5ï¿½ï¿½(0.1mmÃ±ï¿½ï¿½)
+#define PSIZE_A5_Y      2100			// A5Ä¹ï¿½ï¿½(0.1mmÃ±ï¿½ï¿½)
+#define PSIZE_EXEC_X    1842			// Executiveï¿½ï¿½(0.1mmÃ±ï¿½ï¿½)
+#define PSIZE_EXEC_Y    2667			// ExecutiveÄ¹ï¿½ï¿½(0.1mmÃ±ï¿½ï¿½)
+#define PSIZE_BCARD_X    900			// Ì¾ï¿½ï¿½ï¿½ï¿½(0.1mmÃ±ï¿½ï¿½)
+#define PSIZE_BCARD_Y    600			// Ì¾ï¿½ï¿½Ä¹ï¿½ï¿½(0.1mmÃ±ï¿½ï¿½)
+#define PSIZE_12INCH    3048			// 12inch(0.1mmÃ±ï¿½ï¿½)
 
-#define PSIZE_MIN_X       89			// ºÇ¾®Éý(0.1mmÃ±°Ì)
-#define PSIZE_MIN_Y       89			// ºÇ¾®Ä¹(0.1mmÃ±°Ì)
-#define PSIZE_MAX_X     PSIZE_LEGAL_X	// ºÇÂçÉý(0.1mmÃ±°Ì)
-#define PSIZE_MAX_Y     PSIZE_LEGAL_Y	// ºÇÂçÄ¹(0.1mmÃ±°Ì)
-#define PSIZE_BCARDWID  1200			// Ì¾»É¥â¡¼¥ÉºÇÂçÉý
+#define PSIZE_MIN_X       89			// ï¿½Ç¾ï¿½ï¿½ï¿½(0.1mmÃ±ï¿½ï¿½)
+#define PSIZE_MIN_Y       89			// ï¿½Ç¾ï¿½Ä¹(0.1mmÃ±ï¿½ï¿½)
+#define PSIZE_MAX_X     PSIZE_LEGAL_X	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½(0.1mmÃ±ï¿½ï¿½)
+#define PSIZE_MAX_Y     PSIZE_LEGAL_Y	// ï¿½ï¿½ï¿½ï¿½Ä¹(0.1mmÃ±ï¿½ï¿½)
+#define PSIZE_BCARDWID  1200			// Ì¾ï¿½É¥â¡¼ï¿½Éºï¿½ï¿½ï¿½ï¿½ï¿½
 
-#define PSIZE_VMARGIN     60			// ¾å²¼¥Þ¡¼¥¸¥ó(0.1mmÃ±°Ì)
-#define PSIZE_HMARGIN     20			// º¸±¦¥Þ¡¼¥¸¥ó(0.1mmÃ±°Ì)
+#define PSIZE_VMARGIN     60			// ï¿½å²¼ï¿½Þ¡ï¿½ï¿½ï¿½ï¿½ï¿½(0.1mmÃ±ï¿½ï¿½)
+#define PSIZE_HMARGIN     20			// ï¿½ï¿½ï¿½ï¿½ï¿½Þ¡ï¿½ï¿½ï¿½ï¿½ï¿½(0.1mmÃ±ï¿½ï¿½)
 
 #define BROTHER_SANE_DIR "/usr/share/sane/brother/"
 #define BROTHER_GRAYCMDATA_DIR "GrayCmData/"
