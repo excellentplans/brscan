@@ -65,16 +65,84 @@ Start: 2.4.2001
 #include "brother_scanner.h"
 #include "brother_netdev.h"
 #include "brother_advini.h"
+#include "brother_brscan5.h"
 #include "brother_log.h"
 #include "brother_bugchk.h"
 
 extern int g_sane_debug_dll;
+
+static SANE_Status SetupInternalParameters(Brother_Scanner *this);
 
 TDevice *g_pdev;
 
 static int      num_devices;	// USB��˸��Ф��줿Brother�ǥХ�����
 static TDevice  *pdevFirst;	// USB��˸��Ф��줿Brother�ǥХ����ꥹ��
 static Brother_Scanner   *pinstFirst;	// �����ץ󤷤��ǥХ����γƼ����
+
+/* ======================================================================
+ *
+ * Ops dispatch — brscan5 command layer vs. the existing 3/4 path
+ *
+ * The single dispatch gate lives in sane_open(): a model with
+ * seriesNo == BRSCAN5_SERIES_NO (DS-640) gets brscan5_ops_dispatch,
+ * every other model gets the legacy table below, which reproduces the
+ * exact pre-dispatch behaviour (identical call sequences, just routed
+ * through the ops struct so sane_start/read/cancel are op-agnostic).
+ *
+ * ====================================================================== */
+
+static int
+brscan5_legacy_open(Brother_Scanner *this)
+{
+    return OpenDevice(this->hScanner, this->modelInf.seriesNo);
+}
+
+static int
+brscan5_legacy_start(Brother_Scanner *this)
+{
+    SANE_Status rc = SetupInternalParameters(this);
+    if (rc)
+	return rc;
+    return ScanStart(this);
+}
+
+static int
+brscan5_legacy_read(Brother_Scanner *this, char *buf, int maxlen, int *len)
+{
+    return PageScan(this, buf, maxlen, len);
+}
+
+static int
+brscan5_legacy_cancel(Brother_Scanner *this)
+{
+    AbortPageScan(this);
+    return 0;
+}
+
+static int
+brscan5_legacy_close(Brother_Scanner *this)
+{
+    ScanEnd(this);
+    return 0;
+}
+
+/* Existing 3/4 path — behaviour identical to the pre-dispatch code. */
+static const struct brscan5_ops brscan5_ops_legacy = {
+    .open   = brscan5_legacy_open,
+    .start  = brscan5_legacy_start,
+    .read   = brscan5_legacy_read,
+    .cancel = brscan5_legacy_cancel,
+    .close  = brscan5_legacy_close,
+};
+
+/* DS-640 (seriesNo == 5) — brscan5 command layer (brother_brscan5.c). */
+const struct brscan5_ops brscan5_ops_dispatch = {
+    .open   = brscan5_open,
+    .start  = brscan5_start,
+    .read   = brscan5_read,
+    .cancel = brscan5_cancel,
+    .close  = brscan5_close,
+};
 
 /* ======================================================================
 
@@ -402,9 +470,17 @@ Not support (force causing compile error)
 
   pdevFirst=NULL;
 
-  usb_init();
-  usb_find_busses();
-  usb_find_devices();
+  if (brscan5_replay_active()) {
+      /* Replay mode (BROTHER5_REPLAY set): no USB access at all — the
+       * DS-640 is registered directly (pdev=NULL) so the fixture scan
+       * can be opened without hardware. sane_open skips usb_open for it
+       * and the brscan5 replay transport performs no libusb I/O. */
+      WriteLog( "<<< sane_init REPLAY mode (no USB enumeration) >>> " );
+  } else {
+      usb_init();
+      usb_find_busses();
+      usb_find_devices();
+  }
 
   rc=init_model_info();
   if (!rc)
@@ -415,8 +491,25 @@ Not support (force causing compile error)
     return SANE_STATUS_IO_ERROR;
 
   nnetdev=get_net_device_num();
-  if (!usb_busses && nnetdev==0){
-    return SANE_STATUS_IO_ERROR;
+  if (brscan5_replay_active()) {
+      /* Register the DS-640 for the replay session. */
+      PMODELINF pModelInf;
+      int found = 0;
+      for (pModelInf=&modelInfList; pModelInf; pModelInf = pModelInf->next) {
+	  if (pModelInf->vendorID  == SCANNER_VENDOR &&
+	      pModelInf->productID == 0x0468) {
+	      WriteLog( "<<< sane_init RegisterSaneDev (brscan5;replay0) >>> " );
+	      RegisterSaneDev(NULL,"brscan5;replay0",pModelInf,-1);
+	      found = 1;
+	      break;
+	  }
+      }
+      if (!found) {
+	  WriteLog("sane_init REPLAY: DS-640 (04f9:0468) not in model table");
+	  return SANE_STATUS_IO_ERROR;
+      }
+  } else if (!usb_busses && nnetdev==0) {
+      return SANE_STATUS_IO_ERROR;
   }
 
   iBus=0;
@@ -577,28 +670,59 @@ sane_open (SANE_String_Const devicename, SANE_Handle *handle)
 
     if (IFTYPE_USB == this->hScanner->device){
 	this->hScanner->net_device_index = -1;
-	this->hScanner->usb = usb_open(pdev->pdev);
+	/* Replay mode (series 5 only, BROTHER5_REPLAY set): no physical
+	 * device — the brscan5 replay transport does its own fixture I/O
+	 * and must see no USB handle at all. Every other model (and series
+	 * 5 on real hardware) opens+claims interface 1 as before. */
+	if (brscan5_is_brscan5(&pdev->modelInf) &&
+	    brscan5_replay_active()) {
+	    this->hScanner->usb = NULL;
+	    WriteLog("sane_open: brscan5 replay mode — no USB open");
+	} else {
+	    this->hScanner->usb = usb_open(pdev->pdev);
 #ifndef DEBUG_No39
-	g_pdev = pdev;
+	    g_pdev = pdev;
 #endif
-	if (!this->hScanner->usb) return SANE_STATUS_IO_ERROR;
+	    if (!this->hScanner->usb) return SANE_STATUS_IO_ERROR;
 
-	//2005/11/10 not check returned value from usb_set_configuration()
-	//if (usb_set_configuration(this->hScanner, 1))
-	//   return SANE_STATUS_IO_ERROR;
-	//(M-LNX-24 2006/04/11 kado for Fedora5 USB2.0)
-	//errornum = usb_set_configuration(this->hScanner->usb, 1);
-	usb_set_configuration_or_reset_toggle(this, 1);
+	    //2005/11/10 not check returned value from usb_set_configuration()
+	    //if (usb_set_configuration(this->hScanner, 1))
+	    //   return SANE_STATUS_IO_ERROR;
+	    //(M-LNX-24 2006/04/11 kado for Fedora5 USB2.0)
+	    //errornum = usb_set_configuration(this->hScanner->usb, 1);
+	    usb_set_configuration_or_reset_toggle(this, 1);
 
-	if (usb_claim_interface(this->hScanner->usb, 1))
-	    return SANE_STATUS_IO_ERROR;
+	    if (usb_claim_interface(this->hScanner->usb, 1))
+		return SANE_STATUS_IO_ERROR;
+	}
     } else {
 	sscanf(devicename,"net1;dev%d",&this->hScanner->net_device_index);
     }
 
+    // �Ƽ������������
+    this->modelInf.productID = pdev->modelInf.productID;
+    this->modelInf.expcaps = pdev->modelInf.expcaps;     //M-LNX-20
+    this->modelInf.vendorID = pdev->modelInf.vendorID;
+    this->modelInf.index = pdev->modelInf.index;
+    /* seriesNo must be set before the dispatch gate below: the legacy
+     * open op feeds it into OpenDevice()'s ChangeEndpoint[] lookup. */
+    this->modelInf.seriesNo = pdev->modelInf.seriesNo;
+
     // �ǥХ��������ץ�
-    rc= OpenDevice(this->hScanner, pdev->modelInf.seriesNo);
-    WriteLog("sane_open: OpenDevice returned %d (seriesNo=%d)", rc, pdev->modelInf.seriesNo);
+    /* Single dispatch gate for the DS-640 (brscan5): brscan5_is_brscan5()
+     * selects the brscan5 command layer, every other model keeps the
+     * existing 3/4 path. The brscan5 ops table is defined in
+     * brother_brscan5.h; identification semantics are documented there
+     * (BRSCAN5_SERIES_NO + DS-640 product ID). */
+#if BRSANESUFFIX == 2
+    this->ops = brscan5_is_brscan5(&this->modelInf)
+	? &brscan5_ops_dispatch
+	: &brscan5_ops_legacy;
+#else
+    this->ops = &brscan5_ops_legacy;
+#endif
+    rc= this->ops->open(this);
+    WriteLog("sane_open: OpenDevice returned %d (seriesNo=%d)", rc, this->modelInf.seriesNo);
     if (!rc) { WriteLog("sane_open FAIL: OpenDevice failed"); return SANE_STATUS_INVAL; }
 
     // �Ƽ����ν����
@@ -607,13 +731,6 @@ sane_open (SANE_String_Const devicename, SANE_Handle *handle)
     this->scanState.bScanning = FALSE;
     this->scanState.nPageCnt = 0;
 
-    // �Ƽ������������
-    this->modelInf.productID = pdev->modelInf.productID;
-    this->modelInf.expcaps = pdev->modelInf.expcaps;     //M-LNX-20
-    this->modelInf.vendorID = pdev->modelInf.vendorID;
-    this->modelInf.index = pdev->modelInf.index;
-
-    this->modelInf.seriesNo = pdev->modelInf.seriesNo;
 #if BRSANESUFFIX == 1
     // Workaround for DCP1510 on BRSANESUFFIX==1
     if (this->modelInf.seriesNo == 14)
@@ -623,6 +740,11 @@ sane_open (SANE_String_Const devicename, SANE_Handle *handle)
     this->modelInf.modelTypeName = pdev->modelInf.modelTypeName;
 
     get_model_config(&this->modelInf, &this->modelConfig);
+    /* T6: the DS-640's model-table seriesNo (14) does not describe this
+     * device — apply the DS-640 feature profile (100-1200 dpi, BW/Gray/
+     * Color, ADF-only) so the SANE options are built from real features. */
+    if (brscan5_is_brscan5(&this->modelInf))
+	brscan5_override_model_config(&this->modelConfig);
 
     GetLogSwitch( this );
 
@@ -641,41 +763,57 @@ sane_open (SANE_String_Const devicename, SANE_Handle *handle)
 
     GetDeviceAccessParam( this );
 
-    if (!QueryDeviceInfo(this)) // Q���ޥ�ɤ�ȯ�Ԥ��ơ��ǥХ�����������
-	return SANE_STATUS_INVAL;
+    if (!brscan5_is_brscan5(&this->modelInf)) {
+	/* --- Legacy 3/4 path (unchanged) --- */
+
+	if (!QueryDeviceInfo(this)) // Q���ޥ�ɤ�ȯ�Ԥ��ơ��ǥХ�����������
+	    return SANE_STATUS_INVAL;
 
 #ifndef DEBUG_No39
-    if (IFTYPE_USB == this->hScanner->device){       //check i/f
-	if(this->hScanner->usb){
-	    /* CloseDevice handles both the BREQ_GET_CLOSE control msg
-	     * and usb_release_interface(1) internally — matching the
-	     * reference libsane-brother4 ScanEnd sequence. */
-	    CloseDevice(this->hScanner);
-	    usb_close(this->hScanner->usb);
-	    this->hScanner->usb = NULL;
+	if (IFTYPE_USB == this->hScanner->device){       //check i/f
+	    if(this->hScanner->usb){
+		/* CloseDevice handles both the BREQ_GET_CLOSE control msg
+		 * and usb_release_interface(1) internally — matching the
+		 * reference libsane-brother4 ScanEnd sequence. */
+		CloseDevice(this->hScanner);
+		usb_close(this->hScanner->usb);
+		this->hScanner->usb = NULL;
+	    }
+	} else {
+	    if (this->hScanner->net) {
+		CloseDevice(this->hScanner);
+		this->hScanner->net = NULL;
+	    }
 	}
-    } else {
-	if (this->hScanner->net) {
-	    CloseDevice(this->hScanner);
-	    this->hScanner->net = NULL;
-	}
-    }
 #endif
-    ///
-    /// ColorMatch DLL�Υ�����
-    ///
-    this->modelInf.index = pdev->modelInf.index;     // cp index
-    LoadColorMatchDll( this ,this->modelInf.index);  // load dll
+	///
+	/// ColorMatch DLL�Υ�����
+	///
+	this->modelInf.index = pdev->modelInf.index;     // cp index
+	LoadColorMatchDll( this ,this->modelInf.index);  // load dll
 
-    //
-    // Scan Decode DLL�Υ�����
-    //
-    rc = LoadScanDecDll( this );
-    if ( !rc )  // Scan Decode DLL�Υ����ɼ���
-	return SANE_STATUS_INVAL;
+	//
+	// Scan Decode DLL�Υ�����
+	//
+	rc = LoadScanDecDll( this );
+	if ( !rc )  // Scan Decode DLL�Υ����ɼ���
+	    return SANE_STATUS_INVAL;
 
-    // GrayTable�Υ�����
-    LoadGrayTable( this, GRAY_TABLE_NO );
+	// GrayTable�Υ�����
+	LoadGrayTable( this, GRAY_TABLE_NO );
+    } else {
+	/* --- brscan5 (DS-640) path ---
+	 *
+	 * Everything that talks to the device has moved behind the
+	 * brscan5 transport (brother_brscan5.c): the legacy Q-command
+	 * (QueryDeviceInfo) runs on the wrong bulk endpoints for series 5
+	 * and its info is superseded by the brscan5 Q/QDI handshake in
+	 * brscan5_start(); the ScanDec/ColorMatch/GrayTable pipeline is not
+	 * used (raw JPEG passthrough, decode arrives in T6). These are
+	 * skipped here on purpose — see docs/brscan5-status.md. */
+	WriteLog("sane_open: brscan5 path — legacy QueryDeviceInfo/"
+	         "ScanDec/ColorMatch skipped (transport owns the I/O)");
+    }
 
     rc = InitOptions(this);
     WriteLog( "<<< sane_open end >>> " );
@@ -696,7 +834,7 @@ sane_close (SANE_Handle handle)
        * usb_close in the right order. Without this, a scan that ended via
        * sane_read EOF (without sane_cancel) would leave the USB handle
        * open and the scanner in BCOMMAND_RETURN state. */
-      ScanEnd( this );
+      this->ops->close(this);
 
       FreeGrayTable( this );
       FreeColorMatchDll( this );
@@ -716,6 +854,19 @@ sane_close (SANE_Handle handle)
 
   if (scanSrcList)
     FREE(scanSrcList);
+
+  /* T6 (ASan): the mode/source option values are strdup'ed in InitOptions
+   * and sane_control_option — free them here (was a 38 B leak per open). */
+  if (this->aoptVal[optMode].s)
+    {
+      free (this->aoptVal[optMode].s);
+      this->aoptVal[optMode].s = NULL;
+    }
+  if (this->aoptVal[optScanSrc].s)
+    {
+      free (this->aoptVal[optScanSrc].s);
+      this->aoptVal[optScanSrc].s = NULL;
+    }
 
   /* unlink active device entry */
   pParent=NULL;
@@ -913,6 +1064,12 @@ sane_get_parameters (SANE_Handle handle, SANE_Parameters *p)
   this=(Brother_Scanner *)handle;
   SetupInternalParameters(this);
 
+  /* brscan5 (DS-640): parameters come from the brscan5 session (two-phase:
+   * option-based estimate before sane_start, real JPEG header dimensions
+   * after it). See brother_brscan5.c / docs/brscan5-status.md. */
+  if (brscan5_is_brscan5(&this->modelInf))
+    return brscan5_get_parameters(this, p);
+
   if (this->scanState.bScanning) {
     p->pixels_per_line = this->scanInfo.ScanAreaSize.lWidth;
     p->lines = this->scanInfo.ScanAreaSize.lHeight;
@@ -971,7 +1128,7 @@ sane_start (SANE_Handle handle)
   if (rc) // �����ͤ��ְ�äƤ����票�顼���֤���
 	return rc;
 
-  rc = ScanStart(this);
+  rc = this->ops->start(this);
   if (rc) return rc;
 
   WriteLog( "<<< sane_start End >>> " );
@@ -992,10 +1149,10 @@ sane_read (SANE_Handle handle, SANE_Byte *buf,
   *len=0;
 
   if (!this->scanState.bEOF) {
-    rc=PageScan(this,(char*)buf,maxlen,len);
+    rc=this->ops->read(this,(char*)buf,maxlen,len);
     if(rc == SANE_STATUS_DUPLEX_ADVERSE  && *len == 1) //06/02/27 if 0x84 is only returned, retry PageScan.
       //while(rc == SANE_STATUS_DUPLEX_ADVERSE  && *len == 1)
-	rc =PageScan(this,(char*)buf,maxlen,len);
+	rc =this->ops->read(this,(char*)buf,maxlen,len);
   }
   else {
     rc = SANE_STATUS_EOF;
@@ -1016,7 +1173,7 @@ sane_cancel (SANE_Handle handle)
   DBG(DEBUG_VERBOSE,"cancel called...\n");
 
   if (this->scanState.bScanning) {
-    AbortPageScan( this );
+    this->ops->cancel(this);
     this->scanState.bScanning=FALSE;
 
   }

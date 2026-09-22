@@ -1989,7 +1989,11 @@ ScanEnd( Brother_Scanner *this )
     //
     // end of the decode/stretch process
     //
-    this->scanDec.lpfnScanDecClose();
+    /* Guard: the brscan5 path (series 5, raw JPEG passthrough) never loads
+     * ScanDec — lpfnScanDecClose stays NULL there. Legacy 3/4 models always
+     * load it, so this check is a no-op for them. */
+    if (this->scanDec.lpfnScanDecClose)
+	this->scanDec.lpfnScanDecClose();
 
     WriteLog( "<<<<< Terminate Scanning <<<<<" );
 }
