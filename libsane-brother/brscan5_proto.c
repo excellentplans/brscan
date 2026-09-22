@@ -302,6 +302,33 @@ brscan5_rsp_xsc(const unsigned char *buf, int len)
     return -1;
 }
 
+/* ======================================================================
+ * Scan-geometry conversion policies (see brscan5_proto.h)
+ * ====================================================================== */
+
+/* Policy "estimate": 0.1-mm integers × dpi / 254, truncation, clamp ≥ 1.
+ * C integer division truncates toward zero, matching the legacy
+ * brother.c ScanAreaDot arithmetic this replaces. */
+long
+brscan5_mm0d1_to_px(long mm0d1, int dpi)
+{
+    long px = mm0d1 * (long)dpi / 254L;
+
+    if (px < 1)
+        px = 1;
+    return px;
+}
+
+/* Policy "area": raw SANE mm × dpi / 25.4, round-half-up. Byte-exact
+ * against every captured XSC AREA value at 150/300 dpi (T8b/T8c); the
+ * 600-dpi T8c height (8399) is NOT reproduced from the DS-640 default
+ * br-y 355.6 mm — documented divergence, see test_brscan5_geo.c. */
+long
+brscan5_mm_to_px_area(double mm, int dpi)
+{
+    return (long)(mm * dpi / 25.4 + 0.5);
+}
+
 /* Fill the SANE parameters for a given width/height and scan mode
  * (COLOR_* ids from brother.h). Mapping per T6 spec:
  *   Color   -> SANE_FRAME_RGB,  depth 8, bytes_per_line = width*3

@@ -144,6 +144,33 @@ int brscan5_rsp_xsc(const unsigned char *buf, int len);
  * DS-640 capture only covers 300 dpi colour.) */
 void brscan5_fill_params(SANE_Parameters *p, long w, long h, int color_type);
 
+/* ------------------------------------------------------------------
+ * Scan-geometry conversion policies.
+ *
+ * The brscan5 backend has TWO DIFFERENT mm -> pixel conversions, one
+ * per code path. They are intentionally NOT unified — each mirrors the
+ * arithmetic its capture evidence pins — but the arithmetic itself
+ * lives here so both paths and the unit tests share one implementation.
+ * ------------------------------------------------------------------ */
+
+/* Policy "estimate" (sane_get_parameters estimate path): the scan area
+ * arrives as 0.1-mm INTEGERS (uiSetting.ScanAreaMm) and pixels are
+ * mm0d1 * dpi / 254 with C integer truncation, clamped to >= 1.
+ * Identical to the legacy brother.c ScanAreaDot arithmetic
+ * (brother.c: lpScanAreaDot->left = ScanAreaMm.left * lUserResoX / 254L). */
+long brscan5_mm0d1_to_px(long mm0d1, int dpi);
+
+/* Policy "area" (XSC AREA= build in brscan5_start): raw SANE mm
+ * (SANE_UNFIX of the br-/tl- option values) scaled by dpi/25.4 with
+ * round-half-up ((long)(mm * dpi / 25.4 + 0.5)).
+ * Verified against the captures at 300 dpi end-to-end (T8b reference +
+ * e2e replay, AREA=0,0,2550,4200) and against the T8c native vectors at
+ * 150/300 dpi (0,0,1275,2100 / 0,0,2550,4200). At 600 dpi the T8c
+ * captures pin the height to 8399 while this policy computes 8400 from
+ * the DS-640 default br-y 355.6 mm — see tests/unit/test_brscan5_geo.c
+ * for the divergence analysis. */
+long brscan5_mm_to_px_area(double mm, int dpi);
+
 #ifdef __cplusplus
 }
 #endif

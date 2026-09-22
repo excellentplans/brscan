@@ -521,7 +521,9 @@ brscan5_transport_close(brscan5_transport_t *t)
 
 /* Estimate the pixel dimensions of the next page from the configured
  * options (scan area in 0.1 mm + resolution). Used by
- * brscan5_get_parameters before the JPEG header is available. */
+ * brscan5_get_parameters before the JPEG header is available. The
+ * conversion itself is the shared "estimate" policy
+ * (brscan5_mm0d1_to_px: 0.1-mm ints × dpi / 254, truncation, clamp ≥ 1). */
 static void
 brscan5_estimate_dims(Brother_Scanner *this, long *w, long *h)
 {
@@ -529,14 +531,12 @@ brscan5_estimate_dims(Brother_Scanner *this, long *w, long *h)
 
     memset(&reso, 0, sizeof(reso));
     CnvResoNoToUserResoValue(&reso, this->uiSetting.wResoType);
-    *w = (long)(this->uiSetting.ScanAreaMm.right - this->uiSetting.ScanAreaMm.left)
-	 * reso.wResoX / 254L;
-    *h = (long)(this->uiSetting.ScanAreaMm.bottom - this->uiSetting.ScanAreaMm.top)
-	 * reso.wResoY / 254L;
-    if (*w < 1)
-        *w = 1;
-    if (*h < 1)
-        *h = 1;
+    *w = brscan5_mm0d1_to_px(
+             (long)(this->uiSetting.ScanAreaMm.right - this->uiSetting.ScanAreaMm.left),
+             reso.wResoX);
+    *h = brscan5_mm0d1_to_px(
+             (long)(this->uiSetting.ScanAreaMm.bottom - this->uiSetting.ScanAreaMm.top),
+             reso.wResoY);
 }
 
 int
@@ -1020,10 +1020,14 @@ brscan5_start(Brother_Scanner *this)
 
     /* XSC — scan start (90 00 = empty feeder, 14-B 00 02 record = OK).
      * RESO must match the SSP settings; AREA= carries the configured
-     * scan area in PIXELS at the scan resolution. The reference driver
-     * computes px = round(mm * dpi / 25.4) from the SANE br-/tl- options
-     * (reference full-area at 300 dpi: 0,0,2550,4200 from br-x 215.88 /
-     * br-y 355.567 mm). */
+     * scan area in PIXELS at the scan resolution, computed by the
+     * shared "area" policy (brscan5_mm_to_px_area: round-half-up of
+     * mm × dpi / 25.4 from the SANE br-/tl- options — reference
+     * full-area at 300 dpi: 0,0,2550,4200, byte-exact vs. the T8b
+     * reference capture and the e2e replay). T8c note: the native
+     * 600-dpi captures pin the height to 8399 where this policy
+     * computes 8400 from br-y 355.6 mm — divergence documented in
+     * tests/unit/test_brscan5_geo.c. */
     {
         char area[40];
         SANE_Fixed tlx = this->aoptVal[optTLX].w;
@@ -1035,10 +1039,10 @@ brscan5_start(Brother_Scanner *this)
         double y0 = SANE_UNFIX(tly < bry ? tly : bry);
         double y1 = SANE_UNFIX(tly < bry ? bry : tly);
         snprintf(area, sizeof(area), "%ld,%ld,%ld,%ld",
-                 (long)(x0 * reso_x / 25.4 + 0.5),
-                 (long)(y0 * reso_y / 25.4 + 0.5),
-                 (long)(x1 * reso_x / 25.4 + 0.5),
-                 (long)(y1 * reso_y / 25.4 + 0.5));
+                 brscan5_mm_to_px_area(x0, reso_x),
+                 brscan5_mm_to_px_area(y0, reso_y),
+                 brscan5_mm_to_px_area(x1, reso_x),
+                 brscan5_mm_to_px_area(y1, reso_y));
         rc = brscan5_enc_xsc_dyn(cmd, sizeof(cmd), reso_x, reso_y, area);
     }
     if (rc <= 0)

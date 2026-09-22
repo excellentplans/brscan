@@ -93,6 +93,21 @@ target_compile_definitions(test_brscan5_encoders PRIVATE BRSANESUFFIX=2)
 enable_testing()
 add_test(NAME brscan5_encoders COMMAND test_brscan5_encoders)
 
+# Scan-geometry conversion policies: estimate path (0.1-mm ints,
+# xdpi/254 truncation + clamp) and XSC AREA path (raw SANE mm,
+# xdpi/25.4 round-half-up), incl. the documented T8c 600-dpi AREA
+# divergence (8400 computed vs 8399 captured — see the test header).
+add_executable(test_brscan5_geo
+        tests/unit/test_brscan5_geo.c
+        libsane-brother/brscan5_proto.c)
+target_include_directories(test_brscan5_geo PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/libsane-brother
+        ${CMAKE_CURRENT_SOURCE_DIR}/libbrscandec
+        ${CMAKE_CURRENT_SOURCE_DIR}/libbrcolm
+        ${SANE_INCLUDE_DIR})
+target_compile_definitions(test_brscan5_geo PRIVATE BRSANESUFFIX=2)
+add_test(NAME brscan5_geo COMMAND test_brscan5_geo)
+
 add_executable(test_brscan5_stream_rle
         tests/unit/test_brscan5_stream_rle.c
         libsane-brother/brscan5_stream.c)
