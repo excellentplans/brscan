@@ -122,7 +122,7 @@ static void test_dyn_encoders_default(void)
     int la, lb;
 
     la = brscan5_enc_ssp_dyn(a, (int)sizeof(a), 300, 300, COLOR_FUL,
-                             50, 50, "NORMAL");
+                             50, 50, "NORMAL", 0);
     lb = brscan5_enc_ssp(b, (int)sizeof(b));
     CHECK(la == 278, "SSP dyn default length 278");
     CHECK(la == lb, "SSP dyn default == fixed wrapper");
@@ -138,13 +138,13 @@ static void test_dyn_encoders_default(void)
 
     /* Buffer-too-small must return 0. */
     CHECK(brscan5_enc_ssp_dyn(a, la - 1, 300, 300, COLOR_FUL,
-                              50, 50, "NORMAL") == 0,
+                              50, 50, "NORMAL", 0) == 0,
           "SSP dyn small buffer rejected");
     CHECK(brscan5_enc_ssp_dyn(a, sizeof(a), 0, 300, COLOR_FUL,
-                              50, 50, "NORMAL") == 0,
+                              50, 50, "NORMAL", 0) == 0,
           "SSP dyn invalid reso rejected");
     CHECK(brscan5_enc_ssp_dyn(a, sizeof(a), 300, 300, COLOR_FUL,
-                              50, 50, NULL) == 0,
+                              50, 50, NULL, 0) == 0,
           "SSP dyn NULL area rejected");
     CHECK(brscan5_enc_xsc_dyn(a, la - 1, 300, 300, "0,0,2550,4200") == 0,
           "XSC dyn small buffer rejected");
@@ -178,7 +178,8 @@ static void test_dyn_encoders_variants(void)
                            + (int)strlen(clr_cases[i].comp) - 4 /* JPEG */
                            + (int)strlen(clr_cases[i].tone) - 2 /* ON */;
         len = brscan5_enc_ssp_dyn(buf, (int)sizeof(buf), 300, 300,
-                                  clr_cases[i].color_type, 50, 50, "NORMAL");
+                                  clr_cases[i].color_type, 50, 50, "NORMAL",
+                                  0);
         CHECK(len == want_len, "SSP dyn variant length (CLR line size)");
         snprintf(want, sizeof(want), "\nCLR=%s\n", clr_cases[i].clr);
         CHECK(len > 0 && strstr(buf, want) != NULL, "SSP dyn CLR= value");
@@ -191,7 +192,7 @@ static void test_dyn_encoders_variants(void)
 
     /* RESO substitution (length grows by the extra digits at 1200 dpi). */
     len = brscan5_enc_ssp_dyn(buf, (int)sizeof(buf), 1200, 1200, COLOR_FUL,
-                              50, 50, "NORMAL");
+                              50, 50, "NORMAL", 0);
     CHECK(len == 280, "SSP dyn 1200 dpi length 280");
     CHECK(len > 0 && strstr(buf, "RESO=1200,1200\n") != NULL,
           "SSP dyn RESO=1200,1200");
@@ -206,7 +207,7 @@ static void test_dyn_encoders_variants(void)
     {
         char ssp[512], xsc[512];
         brscan5_enc_ssp_dyn(ssp, (int)sizeof(ssp), 600, 600, COLOR_TG,
-                            50, 50, "NORMAL");
+                            50, 50, "NORMAL", 0);
         brscan5_enc_xsc_dyn(xsc, (int)sizeof(xsc), 600, 600, "ATDSKW");
         CHECK(strstr(ssp, "RESO=600,600\n") != NULL &&
               strstr(xsc, "RESO=600,600\n") != NULL,
@@ -218,6 +219,20 @@ static void test_dyn_encoders_variants(void)
     CHECK(len == 43, "XSC dyn ATDSKW length 43");
     CHECK(len > 0 && strstr(buf, "AREA=ATDSKW\n") != NULL,
           "XSC dyn AREA=ATDSKW");
+
+    /* COMP=NONE override (HWTEST; the env read moved to the session
+     * side — the test passes the override directly, env-free). Only
+     * COLOR_BW is affected: RLENGTH -> NONE, TONE stays OFF. */
+    len = brscan5_enc_ssp_dyn(buf, (int)sizeof(buf), 300, 300, COLOR_BW,
+                              50, 50, "NORMAL", 1);
+    CHECK(len > 0 && strstr(buf, "\nCOMP=NONE\n") != NULL,
+          "SSP dyn COMP=NONE override (B/W)");
+    CHECK(len > 0 && strstr(buf, "\nTONE=OFF\n") != NULL,
+          "SSP dyn TONE=OFF with COMP=NONE");
+    len = brscan5_enc_ssp_dyn(buf, (int)sizeof(buf), 300, 300, COLOR_FUL,
+                              50, 50, "NORMAL", 1);
+    CHECK(len > 0 && strstr(buf, "\nCOMP=JPEG\n") != NULL,
+          "SSP dyn COMP=NONE override ignored for colour");
 }
 
 /* ------------------------------------------------------------------ */
@@ -247,7 +262,7 @@ static void test_t8b_reference_vectors(void)
     want_len = hex2bytes(g_ref_ssp_hex, want, sizeof(want));
     CHECK(want_len == 278, "T8b ref SSP vector length 278");
     len = brscan5_enc_ssp_dyn(buf, (int)sizeof(buf), 300, 300, COLOR_FUL,
-                              50, 50, "NORMAL");
+                              50, 50, "NORMAL", 0);
     CHECK(len == want_len, "T8b SSP length");
     CHECK(len > 0 && memcmp(buf, want, (size_t)len) == 0,
           "T8b SSP byte-exact vs reference capture");
@@ -283,7 +298,7 @@ static void test_t8c_byte_exact_variants(void)
         CHECK(want_len > 0, "T8c SSP vector parses");
         len = brscan5_enc_ssp_dyn(buf, (int)sizeof(buf), t8c_vecs[i].reso,
                                   t8c_vecs[i].reso, t8c_vecs[i].ct,
-                                  50, 50, "NORMAL");
+                                  50, 50, "NORMAL", 0);
         CHECK(len == want_len, "T8c SSP length");
         CHECK(len > 0 && memcmp(buf, want, (size_t)len) == 0,
               "T8c SSP byte-exact vs native capture");

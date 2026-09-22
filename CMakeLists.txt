@@ -28,6 +28,7 @@ set_target_properties(brcolm PROPERTIES SOVERSION 1)
 add_library(sane-brother SHARED
 	libsane-brother/brother.c
 	libsane-brother/brother_advini.c
+	libsane-brother/brscan5_proto.c
 	libsane-brother/brother_brscan4.c
 	libsane-brother/brother_brscan5.c
 	libsane-brother/brother_brscan5_replay.c
@@ -77,24 +78,18 @@ target_compile_definitions(brsaneconfig PRIVATE BRSANESUFFIX=2)
 target_link_libraries(brsaneconfig sane-brother)
 
 # brscan5 command-layer unit tests (plain C, no framework, independent of
-# the backend build — compiles brother_brscan5.c on its own and verifies the
-# encoder output byte-exactly against commands.golden.json).
+# the backend build — links the pure protocol module directly, no backend
+# deps — and verifies the encoder output byte-exactly against
+# commands.golden.json).
 add_executable(test_brscan5_encoders
         tests/unit/test_brscan5_encoders.c
-        libsane-brother/brother_brscan5.c)
+        libsane-brother/brscan5_proto.c)
 target_include_directories(test_brscan5_encoders PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/libsane-brother
         ${CMAKE_CURRENT_SOURCE_DIR}/libbrscandec
         ${CMAKE_CURRENT_SOURCE_DIR}/libbrcolm
-        ${SANE_INCLUDE_DIR}
-        ${LIBUSB_INCLUDE_DIR})
+        ${SANE_INCLUDE_DIR})
 target_compile_definitions(test_brscan5_encoders PRIVATE BRSANESUFFIX=2)
-# Only the encoder/reader functions are exercised; drop the unreferenced
-# ops/USB symbols (and their libusb/WriteLog dependencies).
-target_compile_options(test_brscan5_encoders PRIVATE -ffunction-sections)
-set_target_properties(test_brscan5_encoders PROPERTIES
-        LINK_FLAGS "-Wl,--gc-sections")
-target_link_libraries(test_brscan5_encoders usb)
 enable_testing()
 add_test(NAME brscan5_encoders COMMAND test_brscan5_encoders)
 
