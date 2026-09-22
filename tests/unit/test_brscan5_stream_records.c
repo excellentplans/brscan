@@ -9,7 +9,7 @@
  * pre-T8e parser only recognized records at chunk starts with an exact
  * record length, so the record bytes were appended to the collected JPEG
  * — the Huffman decoder desynced at that point and the page showed
- * localized shear/ghost bands ("gestaucht/überlappt") in Color/Gray scans.
+ * localized shear/ghost bands (squashed/overlapping content) in Color/Gray scans.
  *
  * Covered cases:
  *   - progress record merged at the tail of a data chunk (mid-page)
