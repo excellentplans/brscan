@@ -35,9 +35,9 @@
  *
  * Behavior:
  *   write(): asserts the sent bytes are byte-identical to the next
- *            OUT-Expect entry. On mismatch -> returns -1 and logs (stderr)
- *            the offending offset and the expected/actual bytes. On match
- *            the entry is consumed.
+ *            OUT-Expect entry. On mismatch -> returns -1 and reports
+ *            (DBG(1), SANE debug channel) the offending offset and the
+ *            expected/actual bytes. On match the entry is consumed.
  *   read() : returns the next IN-Deliver entry verbatim. A 0x01 direction
  *            byte (OUT-Expect) is NOT consumed — it ends the IN stream
  *            with *got = 0 (EOF semantics), so a cancel drain can stop
@@ -47,17 +47,17 @@
  *            bytes until the next OUT-Expect entry or EOF — used by the
  *            cancel path to reposition the fixture at the next command.
  *   reset(): no-op (replay has no endpoints to clear).
- *   debug  : when BROTHER5_DEBUG is set, every write/read is logged with
- *            direction, length and stream offset.
+ *   debug  : every write/read/control/drain action is traced at DBG(5)
+ *            (SANE_DEBUG_BROTHER), direction, length and stream offset.
  */
 
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "brother_brscan5.h"
+#include "brscan5_dbg.h"
 
 #define BR5_REPLAY_DIR_OUT      0x01
 #define BR5_REPLAY_DIR_IN       0x02
@@ -75,20 +75,7 @@ typedef struct {
     FILE   *fp;
     long    out_off;      /* fixture offset of the next OUT-Expect entry */
     long    in_off;       /* fixture offset of the next IN-Deliver entry */
-    int     debug;        /* BROTHER5_DEBUG set -> per-action logging     */
 } brscan5_replay_t;
-
-/* Log helper: replay always reports via stderr (never logs credentials);
- * also mirrors to the backend log channel when available. */
-static void
-brscan5_replay_log(const char *fmt, ...)
-{
-    va_list ap;
-    va_start(ap, fmt);
-    vfprintf(stderr, fmt, ap);
-    fputc('\n', stderr);
-    va_end(ap);
-}
 
 /* Read a 4-byte little-endian length. Returns 0 on success. */
 static int
@@ -111,8 +98,8 @@ brscan5_replay_getdir(FILE *fp, int want)
     if (d == EOF)
         return -1;
     if (d != want) {
-        brscan5_replay_log("brscan5 replay: unexpected direction byte %02x "
-                           "(wanted %02x)", d, want);
+        DBG(1,             "brscan5 replay: unexpected direction byte %02x "
+                           "(wanted %02x)\n", d, want);
         return -1;
     }
     return 0;
@@ -128,18 +115,18 @@ brscan5_replay_write(void *ctx, const uint8_t *buf, size_t len)
     int      rc = 0;
 
     if (brscan5_replay_getdir(r->fp, BR5_REPLAY_DIR_OUT) != 0) {
-        brscan5_replay_log("brscan5 replay: OUT record %ld: expected OUT "
-                           "entry (got %zu B sent)", r->out_off, len);
+        DBG(1,             "brscan5 replay: OUT record %ld: expected OUT "
+                           "entry (got %zu B sent)\n", r->out_off, len);
         return -1;
     }
     if (brscan5_replay_getlen(r->fp, &want) != 0) {
-        brscan5_replay_log("brscan5 replay: OUT record %ld: EOF before length "
-                           "(%zu B sent)", r->out_off, len);
+        DBG(1,             "brscan5 replay: OUT record %ld: EOF before length "
+                           "(%zu B sent)\n", r->out_off, len);
         return -1;
     }
     if (want != len) {
-        brscan5_replay_log("brscan5 replay: OUT record %ld: length mismatch: "
-                           "sent %zu B, fixture %u B", r->out_off, len,
+        DBG(1,             "brscan5 replay: OUT record %ld: length mismatch: "
+                           "sent %zu B, fixture %u B\n", r->out_off, len,
                            (unsigned)want);
         return -1;
     }
@@ -155,17 +142,16 @@ brscan5_replay_write(void *ctx, const uint8_t *buf, size_t len)
             size_t i = 0;
             while (i < want && exp[i] == buf[i])
                 i++;
-            brscan5_replay_log("brscan5 replay: OUT byte mismatch at record "
+            DBG(1,             "brscan5 replay: OUT byte mismatch at record "
                                "%ld, offset %zu: expected %02x got %02x "
-                               "(OUT-assertion FAILED)", r->out_off, i,
+                               "(OUT-assertion FAILED)\n", r->out_off, i,
                                exp[i], buf[i]);
             rc = -1;
         }
         free(exp);
     }
-    if (r->debug)
-        brscan5_replay_log("brscan5 replay: write %zu B @ %ld%s", len,
-                           r->out_off, rc ? " (FAIL)" : "");
+    DBG(5,             "brscan5 replay: write %zu B @ %ld%s\n", len,
+                       r->out_off, rc ? " (FAIL)" : "");
     r->out_off += (long)(5 + want);
     return rc;
 }
@@ -194,12 +180,11 @@ brscan5_replay_read(void *ctx, uint8_t *buf, size_t len, size_t *got)
         if (brscan5_replay_getlen(r->fp, &want) != 0)
             return 0;                   /* truncated: model EOF */
         r->in_off += 5;
-        if (r->debug)
-            brscan5_replay_log("brscan5 replay: fault entry %s (%u ms) @ %ld",
-                               (d == BR5_REPLAY_DIR_TIMEOUT) ? "timeout"
-                                                             : "error",
-                               (d == BR5_REPLAY_DIR_TIMEOUT) ? (unsigned)want : 0u,
-                               r->in_off - 5);
+        DBG(5,             "brscan5 replay: fault entry %s (%u ms) @ %ld\n",
+                           (d == BR5_REPLAY_DIR_TIMEOUT) ? "timeout"
+                                                         : "error",
+                           (d == BR5_REPLAY_DIR_TIMEOUT) ? (unsigned)want : 0u,
+                           r->in_off - 5);
         if (d == BR5_REPLAY_DIR_TIMEOUT) {
             unsigned ms = (want > BR5_REPLAY_TIMEOUT_SLEEP_CAP_MS)
                           ? BR5_REPLAY_TIMEOUT_SLEEP_CAP_MS : (unsigned)want;
@@ -209,23 +194,22 @@ brscan5_replay_read(void *ctx, uint8_t *buf, size_t len, size_t *got)
         return -1;                      /* transport/timeout error */
     }
     if (d != BR5_REPLAY_DIR_IN) {
-        brscan5_replay_log("brscan5 replay: unexpected direction byte %02x "
-                           "(IN entry %ld)", d, r->in_off);
+        DBG(1,             "brscan5 replay: unexpected direction byte %02x "
+                           "(IN entry %ld)\n", d, r->in_off);
         return 0;
     }
     if (brscan5_replay_getlen(r->fp, &want) != 0)
         return 0;                       /* truncated: model EOF */
     if (want > len) {
-        brscan5_replay_log("brscan5 replay: IN entry %ld is %u B, caller "
-                           "buffer %zu B", r->in_off, (unsigned)want, len);
+        DBG(1,             "brscan5 replay: IN entry %ld is %u B, caller "
+                           "buffer %zu B\n", r->in_off, (unsigned)want, len);
         return -1;
     }
     if (fread(buf, 1, want, r->fp) != want)
         return -1;
     *got = (size_t)want;
-    if (r->debug)
-        brscan5_replay_log("brscan5 replay: read  %zu B @ %ld", (size_t)want,
-                           r->in_off);
+    DBG(5,             "brscan5 replay: read  %zu B @ %ld\n", (size_t)want,
+                       r->in_off);
     r->in_off += (long)(5 + want);
     return 0;
 }
@@ -270,8 +254,8 @@ brscan5_replay_drain(void *ctx)
             continue;
         }
         if (d != BR5_REPLAY_DIR_IN) {
-            brscan5_replay_log("brscan5 replay: drain: unexpected direction "
-                               "byte %02x", d);
+            DBG(1,             "brscan5 replay: drain: unexpected direction "
+                               "byte %02x\n", d);
             break;
         }
         {
@@ -288,9 +272,8 @@ brscan5_replay_drain(void *ctx)
             discarded += want;
         }
     }
-    if (r->debug || discarded)
-        brscan5_replay_log("brscan5 replay: drain done (%zu B discarded)",
-                           discarded);
+    DBG(5,             "brscan5 replay: drain done (%zu B discarded)\n",
+                       discarded);
     return 0;
 }
 
@@ -320,14 +303,14 @@ brscan5_replay_control(void *ctx, unsigned char bmRequestType,
     if (wLength > (unsigned)buflen)
         return -1;                      /* caller buffer too small */
     if (brscan5_replay_getdir(r->fp, BR5_REPLAY_DIR_CTRL_EXP) != 0) {
-        brscan5_replay_log("brscan5 replay: control: expected 0x05 "
-                           "OUT-Control-Expect entry");
+        DBG(1,             "brscan5 replay: control: expected 0x05 "
+                           "OUT-Control-Expect entry\n");
         return -1;
     }
     if (brscan5_replay_getlen(r->fp, &want) != 0 ||
         want != BR5_REPLAY_CTRL_SETUP_LEN) {
-        brscan5_replay_log("brscan5 replay: control: 0x05 entry must carry "
-                           "an 8-B setup packet (got %u)", (unsigned)want);
+        DBG(1,             "brscan5 replay: control: 0x05 entry must carry "
+                           "an 8-B setup packet (got %u)\n", (unsigned)want);
         return -1;
     }
     if (fread(exp_setup, 1, sizeof(exp_setup), r->fp) !=
@@ -342,9 +325,9 @@ brscan5_replay_control(void *ctx, unsigned char bmRequestType,
     want_setup[6] = (unsigned char)(wLength & 0xff);
     want_setup[7] = (unsigned char)((wLength >> 8) & 0xff);
     if (memcmp(exp_setup, want_setup, sizeof(exp_setup)) != 0) {
-        brscan5_replay_log("brscan5 replay: control: setup mismatch: "
+        DBG(1,             "brscan5 replay: control: setup mismatch: "
                            "expected %02x%02x%02x%02x%02x%02x%02x%02x, "
-                           "backend built %02x%02x%02x%02x%02x%02x%02x%02x",
+                           "backend built %02x%02x%02x%02x%02x%02x%02x%02x\n",
                            exp_setup[0], exp_setup[1], exp_setup[2],
                            exp_setup[3], exp_setup[4], exp_setup[5],
                            exp_setup[6], exp_setup[7],
@@ -357,24 +340,23 @@ brscan5_replay_control(void *ctx, unsigned char bmRequestType,
 
     /* The response: 0x06 IN-Control-Deliver. */
     if (brscan5_replay_getdir(r->fp, BR5_REPLAY_DIR_CTRL_DEL) != 0) {
-        brscan5_replay_log("brscan5 replay: control: expected 0x06 "
-                           "IN-Control-Deliver after the 0x05 entry");
+        DBG(1,             "brscan5 replay: control: expected 0x06 "
+                           "IN-Control-Deliver after the 0x05 entry\n");
         return -1;
     }
     if (brscan5_replay_getlen(r->fp, &want) != 0)
         return -1;
     if (want > (uint32_t)buflen) {
-        brscan5_replay_log("brscan5 replay: control: response %u B exceeds "
-                           "caller buffer %d B", (unsigned)want, buflen);
+        DBG(1,             "brscan5 replay: control: response %u B exceeds "
+                           "caller buffer %d B\n", (unsigned)want, buflen);
         return -1;
     }
     if (fread(buf, 1, want, r->fp) != want)
         return -1;
     if (got)
         *got = (int)want;
-    if (r->debug)
-        brscan5_replay_log("brscan5 replay: control %02x/%02x -> %u B",
-                           bmRequestType, bRequest, (unsigned)want);
+    DBG(5,             "brscan5 replay: control %02x/%02x -> %u B\n",
+                       bmRequestType, bRequest, (unsigned)want);
     r->in_off += (long)(5 + want);
     return 0;
 }
@@ -411,7 +393,7 @@ brscan5_replay_open(brscan5_transport_t *t, const char *path)
         return -1;
     r->fp = fopen(path, "rb");
     if (!r->fp) {
-        brscan5_replay_log("brscan5 replay: cannot open '%s'", path);
+        DBG(1,             "brscan5 replay: cannot open '%s'\n", path);
         free(r);
         return -1;
     }
@@ -424,15 +406,14 @@ brscan5_replay_open(brscan5_transport_t *t, const char *path)
     if (first_dir == EOF ||
         (first_dir != BR5_REPLAY_DIR_OUT && first_dir != BR5_REPLAY_DIR_IN &&
          first_dir != BR5_REPLAY_DIR_CTRL_EXP)) {
-        brscan5_replay_log("brscan5 replay: '%s' is not a valid TLV fixture "
-                           "(bad leading direction byte %d)", path, first_dir);
+        DBG(1,             "brscan5 replay: '%s' is not a valid TLV fixture "
+                           "(bad leading direction byte %d)\n", path, first_dir);
         fclose(r->fp);
         free(r);
         return -1;
     }
     rewind(r->fp);
 
-    r->debug = getenv("BROTHER5_DEBUG") ? 1 : 0;
     t->write = brscan5_replay_write;
     t->read  = brscan5_replay_read;
     t->drain = brscan5_replay_drain;
@@ -444,7 +425,7 @@ brscan5_replay_open(brscan5_transport_t *t, const char *path)
     t->idle_timeout_ms = 5000;
     t->is_replay = 1;
     t->ctx   = r;
-    brscan5_replay_log("brscan5 transport: REPLAY from '%s' (no USB)",
+    DBG(1,             "brscan5 transport: REPLAY from '%s' (no USB)\n",
                        path);
     return 0;
 }

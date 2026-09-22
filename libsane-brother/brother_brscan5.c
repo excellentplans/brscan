@@ -36,8 +36,24 @@
 #include "brother_brscan5.h"
 #include "brother_scanner.h"   /* CnvResoNoToUserResoValue()            */
 #include "brscan5_stream.h"
+#include "brscan5_dbg.h"       /* DBG() — SANE debug channel            */
 #include "brother_devaccs.h"   /* CloseDevice() — control session close */
-#include "brother_log.h"       /* WriteLog()                            */
+
+/* ---- SANE debug channel (see brscan5_dbg.h) --------------------------- */
+
+int brscan5_dbg_level = -1;    /* <0: not yet initialized               */
+
+void
+brscan5_dbg(int level, const char *fmt, ...)
+{
+    va_list ap;
+
+    if (brscan5_dbg_level < 0)
+        sanei_init_debug("brother", &brscan5_dbg_level);
+    va_start(ap, fmt);
+    sanei_debug_msg(level, brscan5_dbg_level, "brother", fmt, ap);
+    va_end(ap);
+}
 
 /* ======================================================================
  * Device profiles
@@ -312,13 +328,13 @@ brscan5_usb_read(void *ctx, uint8_t *buf, size_t len, size_t *got)
         if (rc == 0 || rc == -ETIMEDOUT) {
             /* idle tick: no bytes within this URB window */
             if (brscan5_now_ms() >= deadline) {
-                WriteLog("brscan5 usb: idle timeout after %d ms without "
-                         "data (EP 0x%02x)", idle_ms, u->ep_in);
+                DBG(1,   "brscan5 usb: idle timeout after %d ms without "
+                         "data (EP 0x%02x)\n", idle_ms, u->ep_in);
                 return -1;
             }
             continue;
         }
-        WriteLog("brscan5 usb: bulk read error rc=%d (EP 0x%02x)",
+        DBG(1,   "brscan5 usb: bulk read error rc=%d (EP 0x%02x)\n",
                  rc, u->ep_in);
         return -1;
     }
@@ -355,11 +371,11 @@ brscan5_usb_drain(void *ctx)
                 break;
             continue;
         }
-        WriteLog("brscan5 usb: drain read error rc=%d", rc);
+        DBG(1,   "brscan5 usb: drain read error rc=%d\n", rc);
         break;
     }
     free(scratch);
-    WriteLog("brscan5 usb: cancel drain done (%zu B discarded)",
+    DBG(5,   "brscan5 usb: cancel drain done (%zu B discarded)\n",
              discarded);
     return 0;
 }
@@ -374,7 +390,7 @@ brscan5_usb_reset(void *ctx)
 
     if (!this || !this->hScanner || !this->hScanner->usb)
         return 0;
-    WriteLog("brscan5 usb: clear_halt 0x%02x/0x%02x after cancel/error",
+    DBG(3,   "brscan5 usb: clear_halt 0x%02x/0x%02x after cancel/error\n",
              u->ep_in, u->ep_out);
     usb_clear_halt(this->hScanner->usb, u->ep_in);
     usb_clear_halt(this->hScanner->usb, u->ep_out);
@@ -417,7 +433,7 @@ brscan5_usb_control(void *ctx, unsigned char bmRequestType,
             break;
     }
     if (rc < 0) {
-        WriteLog("brscan5 usb: control %02x/%02x failed rc=%d",
+        DBG(1,   "brscan5 usb: control %02x/%02x failed rc=%d\n",
                  bmRequestType, bRequest, rc);
         return -1;
     }
@@ -473,7 +489,7 @@ brscan5_transport_open(Brother_Scanner *this)
         t->idle_timeout_ms = BRSCAN5_TIMEOUT_CMD;
         t->is_replay = 0;
         t->ctx   = u;
-        WriteLog("brscan5 transport: USB (EP 0x%02x OUT / 0x%02x IN)",
+        DBG(3,   "brscan5 transport: USB (EP 0x%02x OUT / 0x%02x IN)\n",
                  u->ep_out, u->ep_in);
         return 0;
     }
@@ -541,7 +557,7 @@ brscan5_get_parameters(Brother_Scanner *this, SANE_Parameters *p)
         brscan5_estimate_dims(this, &w, &h);
         brscan5_fill_params(p, w, h, this->uiSetting.wColorType);
     }
-    WriteLog("brscan5_get_parameters: %dx%d bpl=%d depth=%d fmt=%d%s",
+    DBG(3,   "brscan5_get_parameters: %dx%d bpl=%d depth=%d fmt=%d%s\n",
              p->pixels_per_line, p->lines, p->bytes_per_line, p->depth,
              (int)p->format, (s && s->have_real) ? " (real)" : " (est)");
     return SANE_STATUS_GOOD;
@@ -565,7 +581,7 @@ brscan5_jpeg_output_message(j_common_ptr cinfo)
     char buf[JMSG_LENGTH_MAX];
 
     (*cinfo->err->format_message)(cinfo, buf);
-    WriteLog("brscan5 libjpeg: %s", buf);
+    DBG(3,   "brscan5 libjpeg: %s\n", buf);
 }
 
 /* Destroy any active decoder and release its scratch/page buffers. */
@@ -653,14 +669,14 @@ brscan5_rle_decode(brscan5_session_t *s, Brother_Scanner *this)
 
     s->rle_active = 0;
     if (!row) {
-        WriteLog("brscan5 rle: OOM for row buffer");
+        DBG(1,   "brscan5 rle: OOM for row buffer\n");
         return SANE_STATUS_NO_MEM;
     }
     s->raw_len = (size_t)s->rle_nlines * row_bytes;
     s->raw_buf = (uint8_t *)malloc(s->raw_len ? s->raw_len : 1);
     if (!s->raw_buf) {
         free(row);
-        WriteLog("brscan5 rle: OOM for bitmap (%zu bytes)", s->raw_len);
+        DBG(1,   "brscan5 rle: OOM for bitmap (%zu bytes)\n", s->raw_len);
         return SANE_STATUS_NO_MEM;
     }
     for (size_t li = 0; li < s->rle_nlines; li++) {
@@ -683,8 +699,8 @@ brscan5_rle_decode(brscan5_session_t *s, Brother_Scanner *this)
     s->row_bytes = row_bytes;
     s->rle_active = 1;
     s->lines_out = 0;
-    WriteLog("brscan5 rle: page %ldx%ld decoded (%zu blocks, %zu payload "
-             "bytes)", s->real_w, s->real_h, s->rle_nlines, s->page_len);
+    DBG(3,   "brscan5 rle: page %ldx%ld decoded (%zu blocks, %zu payload "
+             "bytes)\n", s->real_w, s->real_h, s->rle_nlines, s->page_len);
     return SANE_STATUS_GOOD;
 }
 
@@ -704,7 +720,7 @@ brscan5_decoder_start(brscan5_session_t *s, Brother_Scanner *this)
     s->jerr.pub.error_exit = brscan5_jpeg_error_exit;
     s->jerr.pub.output_message = brscan5_jpeg_output_message;
     if (setjmp(s->jerr.jb)) {
-        WriteLog("brscan5 decoder: libjpeg error (page dropped)");
+        DBG(1,   "brscan5 decoder: libjpeg error (page dropped)\n");
         jpeg_destroy_decompress(&s->cinfo);
         s->n_errors++;
         s->eof = 1;
@@ -740,7 +756,7 @@ brscan5_decoder_start(brscan5_session_t *s, Brother_Scanner *this)
                    (size_t)s->cinfo.output_components;
     s->row_buf = (JSAMPROW)malloc(s->row_bytes);
     if (!s->row_buf) {
-        WriteLog("brscan5 decoder: OOM for scanline buffer");
+        DBG(1,   "brscan5 decoder: OOM for scanline buffer\n");
         jpeg_destroy_decompress(&s->cinfo);
         s->n_errors++;
         s->eof = 1;
@@ -749,7 +765,7 @@ brscan5_decoder_start(brscan5_session_t *s, Brother_Scanner *this)
     s->dec_active = 1;
     s->lines_out = 0;
 
-    WriteLog("brscan5 decoder: page %ldx%ld, comps=%d, mode=%d",
+    DBG(3,   "brscan5 decoder: page %ldx%ld, comps=%d, mode=%d\n",
              s->real_w, s->real_h, s->cinfo.output_components,
              this->uiSetting.wColorType);
     return SANE_STATUS_GOOD;
@@ -805,7 +821,7 @@ brscan5_ctrl_xfer(brscan5_transport_t *t, int is_close)
     int got = 0;
 
     if (!t->control) {
-        WriteLog("brscan5 ctrl: transport has no control op");
+        DBG(1,   "brscan5 ctrl: transport has no control op\n");
         return -1;
     }
     if (is_close)
@@ -817,19 +833,19 @@ brscan5_ctrl_xfer(brscan5_transport_t *t, int is_close)
                    (unsigned)setup[4] | ((unsigned)setup[5] << 8),
                    (unsigned)setup[6] | ((unsigned)setup[7] << 8),
                    rsp, (int)sizeof(rsp), &got) != 0) {
-        WriteLog("brscan5 ctrl: GET_%s transfer failed",
+        DBG(1,   "brscan5 ctrl: GET_%s transfer failed\n",
                  is_close ? "CLOSE" : "OPEN");
         return -1;
     }
     if (brscan5_rsp_ctrl(rsp, got, breq) != 0) {
-        WriteLog("brscan5 ctrl: GET_%s bad response (%d B: "
-                 "%02x %02x %02x %02x %02x)", is_close ? "CLOSE" : "OPEN",
+        DBG(1,   "brscan5 ctrl: GET_%s bad response (%d B: "
+                 "%02x %02x %02x %02x %02x)\n", is_close ? "CLOSE" : "OPEN",
                  got, got > 0 ? rsp[0] : 0, got > 1 ? rsp[1] : 0,
                  got > 2 ? rsp[2] : 0, got > 3 ? rsp[3] : 0,
                  got > 4 ? rsp[4] : 0);
         return -1;
     }
-    WriteLog("brscan5 ctrl: GET_%s ok (05 10 %02x 02 00)",
+    DBG(3,   "brscan5 ctrl: GET_%s ok (05 10 %02x 02 00)\n",
              is_close ? "CLOSE" : "OPEN", breq);
     return 0;
 }
@@ -885,7 +901,7 @@ brscan5_open(Brother_Scanner *this)
     }
     /* Session-open control (T8b): GET_OPEN before the first Q. */
     if (brscan5_ctrl_xfer(&this->br5->tport, 0) != 0) {
-        WriteLog("brscan5_open: GET_OPEN control failed");
+        DBG(1,   "brscan5_open: GET_OPEN control failed\n");
         brscan5_transport_close(&this->br5->tport);
         br5_parser_free(this->br5->parser);
         free(this->br5);
@@ -903,13 +919,12 @@ brscan5_start(Brother_Scanner *this)
     size_t          got = 0;
     int             rc;
     int             reso_x, reso_y;
-    int             comp_none;
     SANE_Status     st;
     const unsigned char *qdi_payload = NULL;
     brscan5_transport_t *t = &this->br5->tport;
     brscan5_session_t *s = this->br5;
 
-    WriteLog("brscan5_start: Q -> QDI -> CKD -> SSP -> XSC");
+    DBG(3,   "brscan5_start: Q -> QDI -> CKD -> SSP -> XSC\n");
 
     /* T7: a fresh start after cancel (or after a previous page) must work
      * WITHOUT sane_close/sane_open: clear the cancel latch, drop any
@@ -963,14 +978,9 @@ brscan5_start(Brother_Scanner *this)
     if (rc == 0) {
         /* The reference driver does NOT abort on CKD 00 02 (feeder
          * empty) — it continues through the control dance to SSP and
-         * XSC, and XSC then answers 90 00 (usbmon4.log, empty feeder).
-         * The HWTEST hook from T8a is therefore a no-op since T8b; it
-         * is kept (default-off) for capture-script compatibility. */
-        if (getenv("BROTHER5_HWTEST_SSP_ALWAYS"))
-            WriteLog("brscan5_start: BROTHER5_HWTEST_SSP_ALWAYS set — "
-                     "no-op since T8b (normal flow continues to SSP/XSC)");
-        WriteLog("brscan5_start: feeder empty (CKD 00 02) — continuing "
-                 "through dance/SSP/XSC per reference flow");
+         * XSC, and XSC then answers 90 00 (usbmon4.log, empty feeder). */
+        DBG(3,   "brscan5_start: feeder empty (CKD 00 02) — continuing "
+                 "through dance/SSP/XSC per reference flow\n");
     }
 
     /* T8b vendor control dance: GET_CLOSE — ~300 ms — GET_OPEN. SSP is
@@ -989,14 +999,11 @@ brscan5_start(Brother_Scanner *this)
                              this->uiSetting.wResoType);
     reso_x = this->uiSetting.UserSelect.wResoX;
     reso_y = this->uiSetting.UserSelect.wResoY;
-    /* HWTEST hook (moved out of brscan5_enc_ssp_dyn): COMP=NONE for B/W
-     * when BROTHER5_HWTEST_COMP_NONE is set — device support unknown. */
-    comp_none = getenv("BROTHER5_HWTEST_COMP_NONE") ? 1 : 0;
     rc = brscan5_enc_ssp_dyn(cmd, sizeof(cmd), reso_x, reso_y,
                              this->uiSetting.wColorType,
                              this->uiSetting.nBrightness + 50,
                              this->uiSetting.nContrast + 50,
-                             "NORMAL", comp_none);
+                             "NORMAL", 0);
     if (rc <= 0)
         return SANE_STATUS_INVAL;
     if (t->write(t->ctx, (const uint8_t *)cmd, (size_t)rc) != 0)
@@ -1005,8 +1012,8 @@ brscan5_start(Brother_Scanner *this)
     if (t->read(t->ctx, rsp, sizeof(rsp), &got) != 0 || got == 0 ||
         brscan5_rsp_ssp(rsp, (int)got) != 0) {
         if (got > 0 && brscan5_rsp_ssp_rejected(rsp, (int)got)) {
-            WriteLog("brscan5_start: SSP rejected (83 53 53 50 … status "
-                     "0x83) — device refused the settings");
+            DBG(1,   "brscan5_start: SSP rejected (83 53 53 50 … status "
+                     "0x83) — device refused the settings\n");
         }
         return SANE_STATUS_IO_ERROR;
     }
@@ -1056,7 +1063,7 @@ brscan5_start(Brother_Scanner *this)
         if (rc < 0)
             return SANE_STATUS_IO_ERROR;
         if (rc == 0) {
-            WriteLog("brscan5_start: XSC 90 00 (empty feeder)");
+            DBG(3,   "brscan5_start: XSC 90 00 (empty feeder)\n");
             return SANE_STATUS_NO_DOCS;
         }
         if (rc == 2) {
@@ -1066,7 +1073,7 @@ brscan5_start(Brother_Scanner *this)
              * string "Document feeder jammed" is what paperless-scan.sh
              * greps for ('feeder jammed'). Recovery works without
              * replug. */
-            WriteLog("brscan5_start: XSC 91 00 (feeder jammed)");
+            DBG(3,   "brscan5_start: XSC 91 00 (feeder jammed)\n");
             return SANE_STATUS_JAMMED;
         }
 
@@ -1097,7 +1104,7 @@ brscan5_start(Brother_Scanner *this)
     if (st != SANE_STATUS_GOOD)
         return st;
 
-    WriteLog("brscan5_start: scan started (rc=GOOD, page %ldx%ld)",
+    DBG(3,   "brscan5_start: scan started (rc=GOOD, page %ldx%ld)\n",
              s->real_w, s->real_h);
     return SANE_STATUS_GOOD;
 }
@@ -1128,7 +1135,7 @@ brscan5_on_event(const br5_event_t *ev, void *userdata)
             size_t need = s->page_len + ev->jpeg_len;
             if (need > BR5_JPEG_CAP_MAX) {
                 s->n_errors++;
-                WriteLog("brscan5 read: page buffer overflow (cap 64 MB)");
+                DBG(1,   "brscan5 read: page buffer overflow (cap 64 MB)\n");
                 s->eof = 1;
                 break;
             }
@@ -1141,7 +1148,7 @@ brscan5_on_event(const br5_event_t *ev, void *userdata)
                 uint8_t *nb = (uint8_t *)realloc(s->page_buf, nc);
                 if (!nb) {
                     s->n_errors++;
-                    WriteLog("brscan5 read: OOM growing page buffer");
+                    DBG(1,   "brscan5 read: OOM growing page buffer\n");
                     s->eof = 1;
                     break;
                 }
@@ -1156,7 +1163,7 @@ brscan5_on_event(const br5_event_t *ev, void *userdata)
             size_t *nb2 = (size_t *)realloc(s->rle_offs, nc * sizeof(*nb2));
             if (!nb2) {
                 s->n_errors++;
-                WriteLog("brscan5 read: OOM growing line table");
+                DBG(1,   "brscan5 read: OOM growing line table\n");
                 s->eof = 1;
                 break;
             }
@@ -1171,7 +1178,7 @@ brscan5_on_event(const br5_event_t *ev, void *userdata)
             size_t need = s->page_len + ev->jpeg_len;
             if (need > BR5_JPEG_CAP_MAX) {
                 s->n_errors++;
-                WriteLog("brscan5 read: page buffer overflow (cap 64 MB)");
+                DBG(1,   "brscan5 read: page buffer overflow (cap 64 MB)\n");
                 s->eof = 1;
                 break;
             }
@@ -1184,7 +1191,7 @@ brscan5_on_event(const br5_event_t *ev, void *userdata)
                 uint8_t *nb = (uint8_t *)realloc(s->page_buf, nc);
                 if (!nb) {
                     s->n_errors++;
-                    WriteLog("brscan5 read: OOM growing page buffer");
+                    DBG(1,   "brscan5 read: OOM growing page buffer\n");
                     s->eof = 1;
                     break;
                 }
@@ -1213,12 +1220,12 @@ brscan5_on_event(const br5_event_t *ev, void *userdata)
     case BR5_EV_WARN:
         s->n_warns++;
         if (ev->message)
-            WriteLog("brscan5 parser warn: %s", ev->message);
+            DBG(3,   "brscan5 parser warn: %s\n", ev->message);
         break;
     case BR5_EV_ERROR:
         s->n_errors++;
         if (ev->message)
-            WriteLog("brscan5 parser error: %s", ev->message);
+            DBG(1,   "brscan5 parser error: %s\n", ev->message);
         s->eof = 1;
         break;
     default:
@@ -1239,19 +1246,19 @@ brscan5_pump(brscan5_session_t *s)
     s->tport.idle_timeout_ms = BRSCAN5_TIMEOUT_DATA;
     for (;;) {
         if (s->tport.read(s->tport.ctx, urb, sizeof(urb), &got) != 0) {
-            WriteLog("brscan5_pump: transport read error");
+            DBG(1,   "brscan5_pump: transport read error\n");
             return SANE_STATUS_IO_ERROR;
         }
         if (got == 0) {
             /* EOF: fixture exhausted / device silent. If no page was
              * produced this is a clean end of stream. */
-            WriteLog("brscan5_pump: transport EOF (got=0)");
+            DBG(3,   "brscan5_pump: transport EOF (got=0)\n");
             s->eof = 1;
             return (s->page_ready) ? SANE_STATUS_GOOD : SANE_STATUS_EOF;
         }
         if (br5_parser_feed(s->parser, urb, got,
                             BR5_FLAG_CHUNK_START) != 0) {
-            WriteLog("brscan5_pump: parser fatal error");
+            DBG(1,   "brscan5_pump: parser fatal error\n");
             return SANE_STATUS_IO_ERROR;
         }
         if (s->n_errors)
@@ -1349,7 +1356,7 @@ brscan5_read(Brother_Scanner *this, char *buf, int maxlen, int *len)
             *len = (SANE_Int)filled;
             return SANE_STATUS_GOOD;
         }
-        WriteLog("brscan5 read: RLENGTH page decoded (%ld lines)",
+        DBG(3,   "brscan5 read: RLENGTH page decoded (%ld lines)\n",
                  s->lines_out);
         brscan5_decoder_teardown(s);
         brscan5_drain(s);
@@ -1359,7 +1366,7 @@ brscan5_read(Brother_Scanner *this, char *buf, int maxlen, int *len)
     /* Decode scanlines into the caller buffer as long as whole lines
      * fit (libjpeg streaming — never holds more than one scanline). */
     if (setjmp(s->jerr.jb)) {
-        WriteLog("brscan5 read: libjpeg error while decoding");
+        DBG(1,   "brscan5 read: libjpeg error while decoding\n");
         brscan5_decoder_teardown(s);
         s->n_errors++;
         s->eof = 1;
@@ -1383,7 +1390,7 @@ brscan5_read(Brother_Scanner *this, char *buf, int maxlen, int *len)
     /* All scanlines delivered: finish the decoder, free the page JPEG
      * buffer and drain the trailing records (PAGE_END/SESSION_END). */
     if (jpeg_finish_decompress(&s->cinfo))
-        WriteLog("brscan5 read: page decoded (%ld lines)", s->lines_out);
+        DBG(3,   "brscan5 read: page decoded (%ld lines)\n", s->lines_out);
     brscan5_decoder_teardown(s);
     brscan5_drain(s);
     return SANE_STATUS_EOF;
@@ -1412,7 +1419,7 @@ brscan5_cancel(Brother_Scanner *this)
     brscan5_session_t *s = this->br5;
     int was_armed = s ? s->armed : 0;
 
-    WriteLog("brscan5_cancel: armed=%d", was_armed);
+    DBG(3,   "brscan5_cancel: armed=%d\n", was_armed);
 
     /* SANE semantics: cancel only flags the abort — the caller (sane_)
      * performs the synchronous cleanup here, so this function IS the

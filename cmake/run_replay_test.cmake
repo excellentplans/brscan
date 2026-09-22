@@ -31,6 +31,11 @@ execute_process(
         "SANE_CONFIG_DIR=${SANE_CFG_ABS}"
         "LD_LIBRARY_PATH=${BUILD_DIR}"
         "BROTHER5_REPLAY=${FIXTURE_ABS}"
+        # SANE_DEBUG_BROTHER=30 keeps the brscan5 DBG(1) failure
+        # diagnostics visible in the ctest output on failure. The test
+        # verdict itself never depends on log visibility — DBG output is
+        # gated by the env var only.
+        "SANE_DEBUG_BROTHER=30"
         "${TEST_BIN}" "${BACKEND_ABS}" "${OUT_FILE}" ${ARGS}
     RESULT_VARIABLE rc
     OUTPUT_VARIABLE stdout

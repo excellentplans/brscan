@@ -103,11 +103,17 @@ Tests cover: brscan4 frame structure, packbits decompression (including ARM `sig
 
 ## Debug Logging
 
-Set `BROTHER_DEBUG=1` to enable verbose logging to stderr:
+Set `SANE_DEBUG_BROTHER=<level>` to enable the SANE debug channel
+(stderr, `[brother]` prefix; output when `level <= debug level`):
 
 ```
-BROTHER_DEBUG=1 scanimage --mode "True Gray" --resolution 200 -x 210 -y 297 > scan.pnm
+SANE_DEBUG_BROTHER=30 scanimage --mode "True Gray" --resolution 200 -x 210 -y 297 > scan.pnm
 ```
+
+Levels: `DBG(1)` errors/faults, `DBG(3)` state transitions, `DBG(5)`
+per-action traces (replay transport write/read/control/drain, USB
+drain/cancel). The legacy brscan3/4 code paths log via `WriteLog()`
+(legacy stderr logging, see brother_log.c).
 
 ## Architecture
 

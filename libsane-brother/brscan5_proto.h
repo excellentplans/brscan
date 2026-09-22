@@ -100,9 +100,9 @@ int brscan5_enc_xsc(char *buf, int bufsz);
  *   COLOR_FUL/NOCM -> CLR=C24BIT    (24-bit colour, reference-proven)
  *
  * comp_override: 0 = emit the mode's default COMP= value; nonzero =
- * emit COMP=NONE for COLOR_BW instead of COMP=RLENGTH (HWTEST
- * experiment, BROTHER5_HWTEST_COMP_NONE moved to the caller — device
- * support unknown; ignored for all other modes).
+ * emit COMP=NONE for COLOR_BW instead of COMP=RLENGTH (caller-provided
+ * parameter, e.g. for tests/hardware experiments — no env var; ignored
+ * for all other modes).
  * Return command length, or 0 if the output buffer is too small. */
 int brscan5_enc_ssp_dyn(char *buf, int bufsz,
                         int reso_x, int reso_y, int color_type,

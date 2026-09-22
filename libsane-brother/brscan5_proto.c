@@ -117,9 +117,9 @@ brscan5_enc_ssp_dyn(char *buf, int bufsz,
     int len;
     /* T8c live-verified (t8c-phase2-chroot-ref.bin, SSP OUT per mode):
      * Color -> COMP=JPEG TONE=ON, Gray -> COMP=JPEG TONE=ON,
-     * B/W   -> COMP=RLENGTH TONE=OFF. COMP=NONE for B/W is a HWTEST
-     * experiment (comp_override, fed from BROTHER5_HWTEST_COMP_NONE by
-     * the session side) — device support unknown. */
+     * B/W   -> COMP=RLENGTH TONE=OFF. COMP=NONE for B/W is a
+     * caller-provided comp_override (e.g. tests/hardware experiments)
+     * — device support unknown. */
     const char *comp = "JPEG";
     const char *tone = "ON";
     if (color_type == COLOR_BW) {

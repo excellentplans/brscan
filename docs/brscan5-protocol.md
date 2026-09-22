@@ -161,7 +161,8 @@ observation, not a measured device requirement.
    variant. Both are valid variants; the encoder takes the area as a parameter.
 5. **CKD empty does NOT abort** — both drivers continue to SSP/XSC; XSC is the
    point at which the reference driver receives `90 00` (→ SANE_STATUS_NO_DOCS).
-   Since T8b the brscan5 port follows the same flow (the HWTEST hook is therefore a no-op).
+   Since T8b the brscan5 port follows the same flow (the obsolete HWTEST
+   SSP_ALWAYS hook has been removed).
 6. The QDI response (662 B) and Q response (75 B) are byte-identical across all
    combinations; CKD responds `00 02` (empty) / `00 01` (paper).
 
