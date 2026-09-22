@@ -109,6 +109,23 @@ target_include_directories(test_brscan5_stream_records PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/libsane-brother)
 add_test(NAME brscan5_stream_records COMMAND test_brscan5_stream_records)
 
+# Synthetic edge-case tests for the stream parser (ported from the
+# standalone parser suite): chunking at arbitrary split points, EOI split
+# across chunks, JPEG buffer overflow, idle feed, multipage, trailing
+# data, unknown records, and a randomized fuzz loop. The fuzz iteration
+# count defaults to 5000; CI can raise it with
+# -DBRSCAN5_FUZZ_ITERATIONS=<N> (or per run: argv[1]).
+set(BRSCAN5_FUZZ_ITERATIONS 5000 CACHE STRING
+        "brscan5 stream parser fuzz iterations (default 5000)")
+add_executable(test_brscan5_stream_edge
+        tests/unit/test_brscan5_stream_edge.c
+        libsane-brother/brscan5_stream.c)
+target_include_directories(test_brscan5_stream_edge PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/libsane-brother)
+target_compile_definitions(test_brscan5_stream_edge PRIVATE
+        FUZZ_ITERATIONS=${BRSCAN5_FUZZ_ITERATIONS})
+add_test(NAME brscan5_stream_edge COMMAND test_brscan5_stream_edge)
+
 # brscan5 replay end-to-end test (T6): loads the built backend .so, runs the
 # full SANE lifecycle against the replay transport (no hardware), sets
 # resolution/mode via sane_control_option, checks the two-phase
