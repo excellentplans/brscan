@@ -73,6 +73,24 @@ target_include_directories(brsaneconfig PRIVATE
 target_compile_definitions(brsaneconfig PRIVATE BRSANESUFFIX=2)
 target_link_libraries(brsaneconfig sane-brother)
 
+enable_testing()
+
+add_executable(test_brscan5_stream_rle
+        tests/unit/test_brscan5_stream_rle.c
+        libsane-brother/brscan5_stream.c)
+target_include_directories(test_brscan5_stream_rle PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/libsane-brother)
+add_test(NAME brscan5_stream_rle COMMAND test_brscan5_stream_rle)
+
+# T8e: status records riding INSIDE data chunks (USB short-packet rule) —
+# the collected JPEG must stay byte-identical in every coalescing pattern.
+add_executable(test_brscan5_stream_records
+        tests/unit/test_brscan5_stream_records.c
+        libsane-brother/brscan5_stream.c)
+target_include_directories(test_brscan5_stream_records PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/libsane-brother)
+add_test(NAME brscan5_stream_records COMMAND test_brscan5_stream_records)
+
 install(TARGETS brsaneconfig brscandec brcolm)
 install(TARGETS sane-brother LIBRARY DESTINATION /usr/lib/sane)
 
