@@ -22,7 +22,15 @@ Additionally, the **DCP-1510 scan protocol** (brscan4) was reverse-engineered fr
 
 ## Supported Models
 
-Tested on **Brother DCP-1510**. Should work on other Brother MFC/DCP models listed in `data/Brsane.ini`. Models with `seriesNo >= 10` use the brscan4 protocol with the new line framing format.
+Tested on **Brother DCP-1510** and **Brother DS-640**. Should work on other Brother MFC/DCP models listed in `data/Brsane.ini`. Models with `seriesNo >= 10` use the brscan4 protocol with the new line framing format; the DS-640 (`0x0468`) is dispatched to the brscan5 protocol layer below.
+
+## brscan5 Protocol (DS-640)
+
+The DS-640 portable scanner (`04f9:0468`) speaks the newer brscan5 protocol, which was reverse-engineered from usbmon captures and the vendor's proprietary `libLxBsScanCoreApi.so`. It is implemented natively in `libsane-brother/brother_brscan5.c` (session dance, SSP/XSC encoders, URB-boundary framing, JPEG and RLENGTH data paths), tested on **aarch64** (Raspberry Pi 4).
+
+- **USB endpoints:** the DS-640 uses EP 0x83 IN / EP 0x04 OUT — unlike brscan4 models, which use EP 0x85 IN.
+- **Replay-based testing:** `BROTHER5_REPLAY=<tlv>` drives the full SANE lifecycle against recorded protocol fixtures in `tests/data/brscan5/` — the ctest battery (unit + end-to-end + fault injection) needs no hardware.
+- Protocol details: [docs/brscan5-protocol.md](docs/brscan5-protocol.md) (wire-level reference) and [docs/dispatch-points.md](docs/dispatch-points.md) (code map of the dispatch and data path).
 
 ## Prerequisites
 
