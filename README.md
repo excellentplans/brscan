@@ -92,14 +92,7 @@ Available scan modes: `Black & White`, `Gray[Error Diffusion]`, `True Gray`, `24
 
 ## Tests
 
-```
-cd build
-gcc -o test_integration ../tests/test_integration.c -ldl -lm
-./test_integration ./libbrscandec.so.1 ./libbrcolm.so.1 ../libbrcolm/GrayCmData/YL4FB/brlutcm.dat
-# === Results: 65 passed, 0 failed ===
-```
-
-Tests cover: brscan4 frame structure, packbits decompression (including ARM `signed char` edge cases), ScanDecOpen parameter computation, full decode pipeline, color matching, and end-to-end JPEG color decode (`tests/test_color_jpeg.c`).
+Tests cover: brscan4 frame structure, packbits decompression (including ARM `signed char` edge cases), ScanDecOpen parameter computation, full decode pipeline, color matching, and end-to-end JPEG color decode.
 
 ## Debug Logging
 
