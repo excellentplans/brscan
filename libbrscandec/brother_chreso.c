@@ -37,7 +37,6 @@ static char _bss[0x0D00] __attribute__((aligned(16)));
 /* Resolution change circular buffer state */
 #define DAT_002088c0  SPTR(O(0x002088c0))
 #define _DAT_002088c8 SPTR(O(0x002088c8))  /* overlaps DAT_002088c8 */
-#define DAT_002088c8  S64(O(0x002088c8))
 #define DAT_002088d0  S64(O(0x002088d0))
 #define DAT_002088d8  S32(O(0x002088d8))
 #define DAT_002088dc  S32(O(0x002088dc))

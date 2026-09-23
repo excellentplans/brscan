@@ -56,7 +56,6 @@ BOOL     LoadColorMatchDll( Brother_Scanner *this ,int index);
 void     FreeColorMatchDll( Brother_Scanner *this );
 void     InitColorMatchingFunc( Brother_Scanner *this, WORD nColorType, int nRgbDataType );
 void     ExecColorMatchingFunc( Brother_Scanner *this, LPBYTE lpRgbData, long lRgbDataLen, long lLineCount );
-void     CloseColorMatchingFunc( Brother_Scanner *this );
 BOOL     LoadGrayTable( Brother_Scanner *this, BYTE GrayTableNo );
 void     FreeGrayTable( Brother_Scanner *this );
 HANDLE   SetupGrayAdjust( Brother_Scanner *this );

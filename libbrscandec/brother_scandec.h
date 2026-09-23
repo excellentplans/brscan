@@ -21,10 +21,6 @@ typedef	struct {
 	INT		nColorType ;	/* ���顼���� */
 	DWORD	dwInLinePixCnt ;	/* 1�饤������Pixel�� */
 	INT		nOutDataKind ;	/* 24BitColor����RGB���Ϸ��� */
-#if 0	/* brother_deccom.h�˵��� */
-#define	SCODK_PIXEL		1	/* RGB RGB RGB���ǽ� */
-#define	SCODK_PLANE		2	/* RRR GGG BBB���ǽ� */
-#endif
 	BOOL	bLongBoundary ;	/* Long Boundary���� */
 
 /* ScanDecOpen������ꤵ��� */
@@ -41,15 +37,6 @@ typedef	struct {
 #define	SCIDC_PACK		3	/* �ѥå��ӥåİ��� */
 
 	INT		nInDataKind ;		/* ���ϥǡ�����Ǽ���� */
-#if 0	/* brother_deccom.h�˵��� */
-#define	SCIDK_MONO		1	/* ��Υ��� */
-#define	SCIDK_R			2	/* R�ǡ��� */
-#define	SCIDK_G			3	/* G�ǡ��� */
-#define	SCIDK_B			4	/* B�ǡ��� */
-#define	SCIDK_RGB		5	/* RGB���ǽ� */
-#define	SCIDK_BGR		6	/* BGR���ǽ� */
-#define	SCIDK_256		7	/* 256�����顼 */
-#endif
 	CHAR	*pLineData ;	/* ���ϣ��饤��ǡ�����Ǽ�� */
 	DWORD	dwLineDataSize ;	/* ���ϣ��饤��ǡ��������� */
 	CHAR	*pWriteBuff ;	/* ���ϥǡ�����Ǽ�� */

@@ -281,36 +281,6 @@ ExecColorMatchingFunc( Brother_Scanner *this, LPBYTE lpRgbData, long lRgbDataLen
 
 //-----------------------------------------------------------------------------
 //
-//	Function name:	CloseColorMatchingFunc
-//
-//
-//	Abstract:
-//		ColorMatch処理を終了する
-//
-//
-//	Parameters:
-//		なし
-//
-//
-//	Return values:
-//		なし
-//
-//-----------------------------------------------------------------------------
-//	CloseColorMatchingFunc（旧DRV_PROCの一部）
-void
-CloseColorMatchingFunc( Brother_Scanner *this )
-{
-	if( this->cmatch.lpfnColorMatchingEnd != NULL ){
-		if( this->cmatch.nColorMatchStatus == COLORMATCH_GOOD ){
-			(*this->cmatch.lpfnColorMatchingEnd)();
-		}
-	}
-	this->cmatch.nColorMatchStatus = COLORMATCH_NONE;
-}
-
-
-//-----------------------------------------------------------------------------
-//
 //	Function name:	LoadGrayTable
 //
 //

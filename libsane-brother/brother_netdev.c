@@ -369,12 +369,6 @@ int write_device_net(br_net_dev_handle h_dev,
 
 int get_device_id(int index ,  int *idvendor,int *idproduct){
   static char idstring[500],*pid;
-  int gidvendor=0,gidproduct=0;
-
-  if(gidvendor!=0){
-    *idvendor  = gidvendor;
-    *idproduct = gidproduct;
-  }
 
   if (!(pid=get_net_ini_value(index, KEY_ID,idstring,sizeof(idstring)))){
       return -1;
@@ -383,9 +377,6 @@ int get_device_id(int index ,  int *idvendor,int *idproduct){
   *idvendor=0; *idproduct=0;
   sscanf(pid ,"%x:%x", idvendor, idproduct);
   //  logprintf(DLF_OPENCLOSE_FUNC,"   get_device_id    %x, %x:\n",*idvendor, *idproduct);
-
-  gidvendor  = *idvendor;
-  gidproduct = *idproduct;
 
   if(*idvendor==0 && *idproduct ==0){
     logprintf_error("get_device_id: ERROR");

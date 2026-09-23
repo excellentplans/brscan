@@ -95,12 +95,6 @@ typedef void (*br5_event_cb)(const br5_event_t *ev, void *userdata);
 
 typedef struct br5_parser br5_parser_t;
 
-/* Storage size of a parser context (for stack allocation via init()). */
-size_t br5_parser_size(void);
-
-/* Initialize a caller-provided context. Returns 0 on success. */
-int br5_parser_init(br5_parser_t *ctx, br5_event_cb cb, void *userdata);
-
 /* Heap convenience wrappers. */
 br5_parser_t *br5_parser_new(br5_event_cb cb, void *userdata);
 void br5_parser_free(br5_parser_t *ctx);

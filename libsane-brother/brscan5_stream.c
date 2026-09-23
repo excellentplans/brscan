@@ -679,22 +679,6 @@ static size_t boundary(br5_parser_t *p, const uint8_t *chunk, size_t len)
 /* public API                                                           */
 /* ------------------------------------------------------------------ */
 
-size_t br5_parser_size(void)
-{
-    return sizeof(struct br5_parser);
-}
-
-int br5_parser_init(br5_parser_t *p, br5_event_cb cb, void *userdata)
-{
-    if (!p)
-        return -1;
-    memset(p, 0, sizeof(*p));
-    p->cb = cb;
-    p->ud = userdata;
-    p->state = BR5_ST_IDLE;
-    return 0;
-}
-
 br5_parser_t *br5_parser_new(br5_event_cb cb, void *userdata)
 {
     br5_parser_t *p = (br5_parser_t *)calloc(1, sizeof(*p));

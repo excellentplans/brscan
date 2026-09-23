@@ -47,39 +47,6 @@
 #define QUERYTIMEOUY 5000	// 5000ms
 //-----------------------------------------------------------------------------
 //
-//	Function name:	ExecQueryThread
-//
-//
-//	Abstract:Execution of thread that get device information
-//
-//	Parameters:
-//		lpQueryProc: Pointer to thread function
-//
-//		lpQueryPara:Parameter for thread function
-//
-//
-//	Return values:
-//		TRUE  = Normal End
-//		FALSE = Fail to get device information
-//
-//-----------------------------------------------------------------------------
-//
-BOOL
-ExecQueryThread( Brother_Scanner *this, void *lpQueryProc)
-{
-    pthread_t   tid;
-
-    /*  Create receving thread */
-    if (pthread_create(&tid,NULL, lpQueryProc,(void*)this)) return TRUE;
-
-    /*  Wait end of receving thread.  */
-    if (pthread_join(tid,NULL))	return TRUE;
-
-    return TRUE;
-}
-// #define FOR_THREAD
-//-----------------------------------------------------------------------------
-//
 //	Function name:	QueryDeviceInfo
 //
 //
@@ -109,11 +76,7 @@ QueryDeviceInfo( Brother_Scanner *this )
 		//
 		// Execute Q-command
 		//
-#ifdef FOR_THREAD
-		bResult = ExecQueryThread( this, QCommandProc );
-#else
 		bResult = QCommandProc( this );
-#endif
 	}
 
 	if( bResult == FALSE )
@@ -169,11 +132,7 @@ QueryScannerInfo( Brother_Scanner *this )
 	// If device's PC-scan protcol is later than 2000 ver. and
 	// has capability to inquire resolution, execute I-command
 	//
-#ifdef FOR_THREAD
-	bResult = ExecQueryThread( this, QueryScanInfoProc);
-#else
 	bResult = QueryScanInfoProc( this );
-#endif
 
 	if( bResult == FALSE ){
 	  WriteLog("I command Fault");
