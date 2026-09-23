@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.5)
 
 project(brscan)
 
+# SANE backend series: 1 = brscan4 (Brsane.ini, libbrscandec.so),
+# 2 = brscan5 (Brsane2.ini, libbrscandec2.so)
+set(BRSANESUFFIX "2" CACHE STRING "SANE backend series: 1 = brscan4, 2 = brscan5")
+
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 find_package(Sane REQUIRED)
@@ -60,7 +64,7 @@ target_include_directories(sane-brother PRIVATE
 	${SANE_INCLUDE_DIR}
 	${LIBUSB_INCLUDE_DIR}
 	${JPEG_INCLUDE_DIRS})
-target_compile_definitions(sane-brother PRIVATE BACKEND_NAME=brother BRSANESUFFIX=2 V_MAJOR=1 V_MINOR=0)
+target_compile_definitions(sane-brother PRIVATE BACKEND_NAME=brother BRSANESUFFIX=${BRSANESUFFIX} V_MAJOR=1 V_MINOR=0)
 target_link_libraries(sane-brother dl pthread usb ${LIBUSB_LIBRARIES} ${JPEG_LIBRARIES} sane-brother-stubs)
 set_target_properties(sane-brother PROPERTIES SOVERSION 1)
 
@@ -74,7 +78,7 @@ add_executable(brsaneconfig
         brsaneconfig/brsaneconfig.c)
 target_include_directories(brsaneconfig PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/libsane-brother)
-target_compile_definitions(brsaneconfig PRIVATE BRSANESUFFIX=2)
+target_compile_definitions(brsaneconfig PRIVATE BRSANESUFFIX=${BRSANESUFFIX})
 target_link_libraries(brsaneconfig sane-brother)
 
 # brscan5 command-layer unit tests (plain C, no framework, independent of
@@ -89,7 +93,7 @@ target_include_directories(test_brscan5_encoders PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/libbrscandec
         ${CMAKE_CURRENT_SOURCE_DIR}/libbrcolm
         ${SANE_INCLUDE_DIR})
-target_compile_definitions(test_brscan5_encoders PRIVATE BRSANESUFFIX=2)
+target_compile_definitions(test_brscan5_encoders PRIVATE BRSANESUFFIX=${BRSANESUFFIX})
 enable_testing()
 add_test(NAME brscan5_encoders COMMAND test_brscan5_encoders)
 
@@ -105,7 +109,7 @@ target_include_directories(test_brscan5_geo PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/libbrscandec
         ${CMAKE_CURRENT_SOURCE_DIR}/libbrcolm
         ${SANE_INCLUDE_DIR})
-target_compile_definitions(test_brscan5_geo PRIVATE BRSANESUFFIX=2)
+target_compile_definitions(test_brscan5_geo PRIVATE BRSANESUFFIX=${BRSANESUFFIX})
 add_test(NAME brscan5_geo COMMAND test_brscan5_geo)
 
 add_executable(test_brscan5_stream_rle

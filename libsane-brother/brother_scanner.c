@@ -1174,11 +1174,13 @@ PageScan( Brother_Scanner *this, char *lpFwBuf, int nMaxLen, int *lpFwLen )
 		return FALSE;
 #endif
 
+#if BRSANESUFFIX == 2
 	if (this->modelInf.seriesNo >= MUST_CONVERT_MODEL &&
 	    (this->devScanInfo.wColorType == COLOR_FUL ||
 	     this->devScanInfo.wColorType == COLOR_FUL_NOCM))
 		nAnswer = brscan4_process_color_direct(this, wData, &wProcessSize);
 	else
+#endif
 		nAnswer = ProcessMain( this, wData, wDataLineCnt, lpFwTempBuff+FwTempBuffLength, &FwTempBuffLength, &wProcessSize );
 
 #ifdef NO39_DEBUG
@@ -1604,11 +1606,13 @@ PageScan( Brother_Scanner *this, char *lpFwBuf, int nMaxLen, int *lpFwLen )
 		return FALSE;
 #endif
 
+#if BRSANESUFFIX == 2
 	if (this->modelInf.seriesNo >= MUST_CONVERT_MODEL &&
 	    (this->devScanInfo.wColorType == COLOR_FUL ||
 	     this->devScanInfo.wColorType == COLOR_FUL_NOCM))
 		nAnswer = brscan4_process_color_direct(this, wData, &wProcessSize);
 	else
+#endif
 		nAnswer = ProcessMain( this, wData, wDataLineCnt, lpFwTempBuff+FwTempBuffLength, &FwTempBuffLength, &wProcessSize );
 
 #ifdef NO39_DEBUG

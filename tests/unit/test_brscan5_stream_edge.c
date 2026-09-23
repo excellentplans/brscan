@@ -271,7 +271,7 @@ test_chunking(void)
     size_t clen = 0;
     uint8_t *clean = build_clean(&clen);
     uint8_t *istream = NULL;
-    urb_t urbs[6];
+    urb_t urbs[7];
     size_t n_urbs = build_interleaved(&istream, urbs, 8192);
     int fm;
     size_t si;

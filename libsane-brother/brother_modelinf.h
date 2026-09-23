@@ -129,6 +129,12 @@
 #define		BHL2_SF_TYPE	11
 #define		BHL2_FB_DCP		12
 
+/* define the breakpoint of modelname that must be converted color mode
+ * (brscan4 record-protocol dispatch; legacy series never reach it,
+ * keep it above MAX_SERIES_NO so every suffix-1 model takes the
+ * legacy line-protocol path) */
+#define         MUST_CONVERT_MODEL      (MAX_SERIES_NO + 1)
+
 /* define the GRAY-LEVEL data file name */
 #define		YL4_SF_TYPE_NAME	"YL4/brmfgray.bin"
 #define		YL4_FB_DCP_NAME		"YL4FB/brmfgray.bin"
