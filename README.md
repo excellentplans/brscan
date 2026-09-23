@@ -48,7 +48,14 @@ The DS-640 portable scanner (`04f9:0468`) speaks the newer brscan5 protocol, whi
 ## Prerequisites
 
 ```
-sudo apt install libsane-dev libusb-dev libjpeg-dev pkg-config cmake gcc
+sudo apt install git libsane-dev sane-utils libusb-dev libjpeg-dev pkg-config cmake gcc
+```
+
+Get the source:
+
+```
+git clone https://github.com/excellentplans/brscan.git
+cd brscan
 ```
 
 ## Building & Installing
@@ -62,7 +69,7 @@ sudo make install
 sudo sh -c "echo brother >> /etc/sane.d/dll.conf"
 ```
 
-Pre-built binaries for amd64, arm64, and armv7 are published as GitHub releases — see [Releases](https://github.com/excellentplans/brscan/releases).
+Pre-built binaries for amd64, arm64, and armv7 are published as GitHub releases — see [Releases](https://github.com/excellentplans/brscan/releases). Each release tarball contains an `INSTALL.txt` with copy-paste install commands, so you can skip building from source entirely. Releases are cut automatically by pushing a `v*` tag.
 
 ## USB Permissions
 
@@ -79,6 +86,12 @@ SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTRS{idVendor}=="04f9", ATTRS{idP
 EOF
 sudo udevadm control --reload-rules
 ```
+
+## Troubleshooting
+
+- `scanimage -L` finds nothing after adding the udev rule? Unplug and replug the scanner, or run `sudo udevadm trigger` — existing devices only pick up new rules when re-attached.
+- Scanner is listed but scanning fails with "permission denied"? The udev rule didn't match — recheck `idVendor`/`idProduct` against your `lsusb` output.
+- A previously installed official Brother driver package (brscan4/brscan5 `.deb`) can shadow this backend in `/usr/lib/sane` — uninstall it before installing this one.
 
 ## Scanning
 
