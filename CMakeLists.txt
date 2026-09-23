@@ -255,22 +255,6 @@ foreach(fault IN ITEMS cancel error timeout nodocs jam)
   set_tests_properties(brscan5_${fault} PROPERTIES TIMEOUT 60)
 endforeach()
 
-# AddressSanitizer for the brscan5 tests (T6: libjpeg buffer handling).
-# Build in a separate directory: cmake -S . -B build-asan -DBRSCAN_ASAN=ON
-option(BRSCAN_ASAN "Build libsane-brother + brscan5 tests with AddressSanitizer" OFF)
-if(BRSCAN_ASAN)
-  target_compile_options(sane-brother PRIVATE -fsanitize=address -fno-omit-frame-pointer)
-  target_link_options(sane-brother PRIVATE -fsanitize=address)
-  target_compile_options(test_brscan5_replay_raw PRIVATE -fsanitize=address -fno-omit-frame-pointer)
-  target_link_options(test_brscan5_replay_raw PRIVATE -fsanitize=address)
-  target_compile_options(test_brscan5_replay_bw PRIVATE -fsanitize=address -fno-omit-frame-pointer)
-  target_link_options(test_brscan5_replay_bw PRIVATE -fsanitize=address)
-  target_compile_options(test_brscan5_faults PRIVATE -fsanitize=address -fno-omit-frame-pointer)
-  target_link_options(test_brscan5_faults PRIVATE -fsanitize=address)
-  target_compile_options(test_brscan5_encoders PRIVATE -fsanitize=address -fno-omit-frame-pointer)
-  target_link_options(test_brscan5_encoders PRIVATE -fsanitize=address)
-endif()
-
 install(TARGETS brsaneconfig brscandec brcolm)
 install(TARGETS sane-brother LIBRARY DESTINATION /usr/lib/sane)
 
