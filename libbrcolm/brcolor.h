@@ -40,17 +40,6 @@
 #define LUT_KIND_SCAN				"SLUT"			//通常スキャナー処理用ＬＵＴ
 #define LUT_KIND_COPY				"CLUT"			//PC COPY用ＬＵＴ
 
-#ifdef	TABLE_00
-	#define	LUT_RGB						0				//LUT データ種別コード RGB
-//  not used
-//	#define LUT_CMY						1				//LUT データ種別コード CMY
-//	#define	LUT_LAB						2				//LUT データ種別コード LAB
-#endif	//TABLE_00
-#ifdef	TABLE_VER
-	#define	LUT_00						0				//grid only
-	#define LUT_01						1				//grid , gamma , gray
-#endif	//TABLE_VER
-
 #define LUT_DEFINE_FILE				"BrLutDef.Dat"
 													//LUT選択用定義ファイル
 #define LUT_DEFINE_FILE_ID			"BRLD"			//LUT選択用定義ファイルID
@@ -126,7 +115,6 @@ typedef struct{										//LUTデータ構造体
 }BRLUT_HEAD_DATA_VER;
 
 typedef struct{										//LUTデータ構造体
-//	short	sLutDataKind;		//LUTデータ識別コード
 
 	float	s3D_Xmin;			//3D DATA X最小値
 	float	s3D_Xmax;			//3D DATA X最大値
@@ -139,35 +127,7 @@ typedef struct{										//LUTデータ構造体
 	short	s3D_Ysplit;			//3D DATA Y方向分割数
 	short	s3D_Zsplit;			//3D DATA Z方向分割数
 
-//	float	f3D_Xspase;			//3D小立方体空間 Ｘ方向間隔
-//	float	f3D_Yspase;			//3D小立方体空間 Ｙ方向間隔
-//	float	f3D_Zspase;			//3D小立方体空間 Ｚ方向間隔
-
 }BRLUT_HEAD_DATA_00;
-
-#ifdef	TABLE_01
-typedef struct{										//LUTデータ構造体
-//	short	sLutDataKind;		//LUTデータ識別コード
-
-	short	sLutnum;			//LUT data 数
-	short	sGamnum;			//Gamma data 数
-	short	sGraynum;			//Gray data 数
-
-	short	s3D_Xmin;			//3D DATA X最小値
-	short	s3D_Xmax;			//3D DATA X最大値
-	short	s3D_Ymin;			//3D DATA Y最小値
-	short	s3D_Ymax;			//3D DATA Y最大値
-	short	s3D_Zmin;			//3D DATA Z最小値
-	short	s3D_Zmax;			//3D DATA Z最大値
-
-	short	s3D_Xgrid;			//3D DATA X方向grid数
-	short	s3D_Ygrid;			//3D DATA Y方向grid数
-	short	s3D_Zgrid;			//3D DATA Z方向grid数
-	short	s3D_Xspace;			//3D DATA X方向grid size
-	short	s3D_Yspace;			//3D DATA Y方向grid size
-	short	s3D_Zspace;			//3D DATA Z方向grid size
-}BRLUT_HEAD_DATA_01;
-#endif	//TABLE_01
 
 typedef struct{										//LUTデータ定義ファイルテーブルヘッダ情報構造体
 	char	TableID[4];			//テーブル識別コード
@@ -175,20 +135,6 @@ typedef struct{										//LUTデータ定義ファイルテーブルヘッダ情報構造体
 }BRLUT_FILE_HEAD;
 
 typedef struct{										//LUTカラーマッチング対象データ情報
-#ifdef	TABLE_00
-	BYTE	*pbIndex_X;			//入力データ Ｘ
-	BYTE	*pbIndex_Y;			//入力データ Ｙ
-	BYTE	*pbIndex_Z;			//入力データ Ｚ
-
-	short	sColorType_X;		//入力データ Ｘカラータイプ  (Red = 0, Green = 1, Blue = 2) 
-	short	sColorType_Y;		//入力データ Ｙカラータイプ
-	short	sColorType_Z;		//入力データ Ｚカラータイプ
-#endif	//TABLE_00
-#ifdef	TABLE_01
-	short	sData_X;			//入力データ Ｘ
-	short	sData_Y;			//入力データ Ｙ
-	short	sData_Z;			//入力データ Ｚ
-#endif	//TABLE_01
 
 	short	sIndex_X;			//LUT参照インデックス Ｘ
 	short	sIndex_Y;			//LUT参照インデックス Ｙ
@@ -213,22 +159,6 @@ typedef struct{										//LUT代表点データ格納構造体
 	float	fLutZData;			//代表点 Ｚ方向データ
 }BRLUT_DATA;
 
-#ifdef	GAMMA_ADJ
-//typedef struct{										//LUTデータAdjust格納構造体
-//	float	fGammaXData;			//Ｘ方向データ
-//	float	fGammaYData;			//Ｙ方向データ
-//	float	fGammaZData;			//Ｚ方向データ
-//}BRLUT_GAMMA;
-#endif	//GAMMA_ADJ
-
-#ifdef	GRAY_ADJ
-//typedef struct{										//LUTデータAdjust格納構造体
-//	float	fAdjXData;			//Ｘ方向データ
-//	float	fAdjYData;			//Ｙ方向データ
-//	float	fAdjZData;			//Ｚ方向データ
-//}BRLUT_GRAY;
-#endif	//GRAY_ADJ
-
 typedef struct{										//LUT選択用データ構造体
 	short	nScanMode;			//スキャナーモードﾞ（SCAN or COPY)
 	short	nInputMedia;		//入力メディア（紙タイプ）
@@ -251,116 +181,6 @@ typedef struct{										//Hash Table キー用構造体
 #pragma pack()
 
 //--------------------------------------------------------------------- 関数宣言
-#ifdef BRCOLOR
-
-//カラーマッチング初期化処理
-BOOL ColorMatchingInit(CMATCH_INIT matchingInitDat);
-
-//カラーマッチング終了処理
-void ColorMatchingEnd(void);
-
-//カラーマッチング処理
-BOOL ColorMatching(BYTE *pRgbData, long lRgbDataLength, long lLineCount);
-
-
-//γカーブ補正用テーブル初期化処理
-BOOL InitGammaTable(void);
-
-//モニターキャリブレーション初期化処理
-BOOL InitMonitorGamma(void);
-
-//LUT初期化処理
-BOOL InitLUT(char* pcLutKind);
-
-//γカーブ補正処理		
-void GammaCurveMatching(BYTE *pRgbData, long lRgbDataLength, long lLineCount);
-
-//LUT カラーマッチング処理
-BOOL LutColorMatching(BYTE *pRgbData, long lRgbDataLength, long lLineCount);
-
-//モニターキャリブレーション処理
-void MonitorCalibration(BYTE *pRgbData, long lRgbDataLength, long lLineCount);
-
-//LUT参照インデックス取得処理
-BOOL LutIndexGet(float fInPutData, short nLutColor, short *psIndex);
-
-//LUT代表点測色取得処理(測色値）
-BOOL LutExampleDataGet(BRLUT_INPUT_DATA	lutMatchInputData,
-						BRLUT_EXP_POINT *plutExampleData);
-
-//LUT代表点取得処理(論理値）
-BOOL LutLogicalDataGet(BRLUT_INPUT_DATA	lutMatchInputData,
-						BRLUT_LOGIC_POINT *plutLogicData);
-
-//マッチングデータ 計算処理
-BOOL CreateMatchData(BRLUT_INPUT_DATA lutMatchInputData, BRLUT_EXP_POINT lutExampleData,
-					BRLUT_LOGIC_POINT lutLogicData);
-
-//LUT選択処理
-BOOL LutSelect(BRLUT_SELECT lutSelectData, char * lutTableID);
-
-//プリンターモード取得処理
-BOOL GetPrinterMode(BRLUT_SELECT* plutSelectData);
-
-//カラーマッチングハッシュ処理 ハッシュテーブル作成処理
-BOOL StoreColorHash(void);
-
-//カラーマッチングハッシュ処理 ハッシュ検索処理
-BOOL LookupColorHash(BRLUT_INPUT_DATA lutMatchInputData);
-
-//カラーマッチングハッシュ処理 終了処理
-BOOL EndColorHash(void);  
-
-//LUT代表点(小空間 ８ポイント)測色データ取得
-//LUT代表点(小空間 ８ポイント)論理データ値取得
-//マッチングデータ 計算処理
-BOOL MatchDataGet(BRLUT_INPUT_DATA	*lutMatchInputData);
-
-//-------------------------------------------------------------------マッチング用テーブル
-BRMONCALDAT		gMonitorGammaDat;		//モニターキャリブレーションγ値構造体
-
-
-HANDLE			ghGammaCurveTable;		//γカーブ定義テーブル
-BYTE			*gpbGammaCurveTable;
-
-BRLUT_HEAD_DATA_00	gLutDataHead00;		//LUT データヘッダ情報
-#ifdef	TABLE_01
-BRLUT_HEAD_DATA_01	gLutDataHead;		//LUT データヘッダ情報
-#endif	//TABLE_01
-
-
-HANDLE			ghLutDataTable;			//LUT テーブル
-BRLUT_DATA		*gpfLutDataTable;		//LUT DATA
-#ifdef	GAMMA_ADJ
-
-HANDLE			ghLutGammaTable;		//Gamma table
-BRLUT_DATA		*gpfLutGammaTable;		//Gamma data
-#endif	//GAMMA_ADJ
-#ifdef	GRAY_ADJ
-
-HANDLE			ghLutGrayTable;			//Gray table
-BRLUT_DATA		*gpfLutGrayTable;		//Gray data
-#endif	//GRAY_ADJ
-
-CMATCH_INIT		gMatchingInitDat;		//カラーマッチング初期化情報構造体
-
-
-BRLUT_SELECT 	glutSelectData;			//LUT選択情報
-
-char			szgWinSystem[145];		//Windows System ディレクトリ
-#ifdef	INIT_LUT_NAME
-char			szgLutDir[145];			//Lut Data ディレクトリ
-#endif	//INIT_LUT_NAME
-char			szgOpenFile[160];
-
-
-HANDLE			ghHashTable;			//カラーマッチング高速化用ハッシュテーブル
-COLOR_HASH_DAT	*gpHashTable;
-//COLOR_HASH_KEY	colorHashKey[1000];		//カラーマッチング高速化用ハッシュキーテーブル
-//COLOR_HASH_KEY	colorHashKey[3375];		//カラーマッチング高速化用ハッシュキーテーブル
-int				gnColorHashFlag;		//カラーマッチング高速化用ハッシュ処理フラグﾞ(=0 :OFF, =1 :ON)				
-
-#else	//BRCOLOR
 //---------------------------------------------------------------外部公開 関数宣言
 //カラーマッチング初期化処理
 BOOL ColorMatchingInit(CMATCH_INIT matchingInitDat);
@@ -376,7 +196,4 @@ typedef void (*COLOREND)(void);
 //カラーマッチング処理
 typedef BOOL (*COLORMATCHING)(BYTE *, long , long );
 
-#endif	//BRCOLOR
-
 #endif // _H_BRCOLOR_
-
