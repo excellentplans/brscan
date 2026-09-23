@@ -539,7 +539,10 @@ int GetSeriesNo(PMODELINF modelInf,int *series)
 	return res;
 }
 
-#if       BRSANESUFFIX == 2
+#if BRSANESUFFIX != 1 && BRSANESUFFIX != 2
+  force causing compile error
+#endif
+
 /*
 ;------------------------------------------------------------------------------
 ;	Module Name	: GetSupportReso
@@ -559,7 +562,11 @@ void GetSupportReso(int series,PMODELCONFIG modelConfig)
 	modelConfig->SupportReso.val   = 0x0000;						/* initialize */
 	switch(series)
 	{
+#if BRSANESUFFIX == 2
 		case	ALL_SF_TYPE:
+#else
+		case	YL4_SF_TYPE:
+#endif
 			modelConfig->SupportReso.bit.bDpi100x100   = TRUE;		/*  100 x  100 dpi */
 			modelConfig->SupportReso.bit.bDpi150x150   = TRUE;		/*  150 x  150 dpi */
 			modelConfig->SupportReso.bit.bDpi200x200   = TRUE;		/*  200 x  200 dpi */
@@ -572,7 +579,12 @@ void GetSupportReso(int series,PMODELCONFIG modelConfig)
 			modelConfig->SupportReso.bit.bDpi9600x9600 = FALSE;		/* 9600 x 9600 dpi */
 			break;
 
+#if BRSANESUFFIX == 2
 		case	BH3_SF_TYPE:
+#else
+		case	BHL_SF_TYPE:
+		case	BHL2_SF_TYPE:
+#endif
 			modelConfig->SupportReso.bit.bDpi100x100   = TRUE;		/*  100 x  100 dpi */
 			modelConfig->SupportReso.bit.bDpi150x150   = TRUE;		/*  150 x  150 dpi */
 			modelConfig->SupportReso.bit.bDpi200x200   = TRUE;		/*  200 x  200 dpi */
@@ -622,7 +634,13 @@ void GetSupportScanMode(int series,PMODELCONFIG modelConfig)
 	modelConfig->SupportScanMode.val = 0x0000;								/* Initialize */
 	switch(series)
 	{
+#if BRSANESUFFIX == 2
 		case	ALL_SF_TYPE:
+#else
+		case	YL4_SF_TYPE:
+		case	ZLE_SF_TYPE:
+		case	ZL2_SF_TYPE:
+#endif
 			modelConfig->SupportScanMode.bit.bBlackWhite     = TRUE;		/* B/W		*/
 			modelConfig->SupportScanMode.bit.bErrorDiffusion = TRUE;		/* error diffusion */
 			modelConfig->SupportScanMode.bit.bTrueGray       = TRUE;		/*  gray scale */
@@ -630,10 +648,16 @@ void GetSupportScanMode(int series,PMODELCONFIG modelConfig)
 			modelConfig->SupportScanMode.bit.b24BitNoCMatch  = FALSE;		/* 24bitcolor��no ColorMatch��*/
 			break;
 
+#if BRSANESUFFIX == 2
 		case	ALL_FB_DCP:
 		case	ALL_FB_ONLY:
 		case    AL_FB_DCP:
 		case    AL_DUPLEX:
+#else
+		case	YL4_FB_DCP:
+		case	ZLE_FB_DCP:
+		case	ZL2_FB_DCP:
+#endif
 			modelConfig->SupportScanMode.bit.bBlackWhite     = TRUE;		/* B/W		*/
 			modelConfig->SupportScanMode.bit.bErrorDiffusion = TRUE;		/* error diffusion	*/
 			modelConfig->SupportScanMode.bit.bTrueGray       = TRUE;		/*  gray scale	*/
@@ -684,36 +708,59 @@ void GetSupportScanSrc(int series,PMODELINF modelInf ,PMODELCONFIG modelConfig){
 #endif  //M-LNX-20
 	switch(series)
 	{
+#if BRSANESUFFIX == 2
 		case	ALL_SF_TYPE:
 		case	BH3_SF_TYPE:
 		case	GENERIC_RGB_NOFB:
 		case	GENERIC_YCBCR_NOFB:
 		case	GENERIC_YCBCR_NOFB_2:
+#else
+		case	YL4_SF_TYPE:
+		case	ZLE_SF_TYPE:
+		case	ZL2_SF_TYPE:
+		case	BHL_SF_TYPE:
+		case	BHL2_SF_TYPE:
+#endif
 			modelConfig->SupportScanSrc.bit.FB     = FALSE;		/* FlatBed				*/
 			modelConfig->SupportScanSrc.bit.ADF    = TRUE;		/* AutoDocumentFeeder	*/
 			break;
 
+#if BRSANESUFFIX == 2
 		case	ALL_FB_DCP:
 		case	BH3_FB_DCP:
 		case    AL_FB_DCP:
 		case    L4CFB:
+#else
+		case	YL4_FB_DCP:
+		case	ZLE_FB_DCP:
+		case	ZL2_FB_DCP:
+		case	BHL_FB_DCP:
+		case	BHM_FB_TYPE:
+		case	BHL2_FB_DCP:
+#endif
 			modelConfig->SupportScanSrc.bit.FB     = TRUE;		/* FlatBed				*/
 			modelConfig->SupportScanSrc.bit.ADF    = TRUE;		/* AutoDocumentFeeder	*/
 			break;
 
+#if BRSANESUFFIX == 2
 		case	ALL_FB_ONLY:
 		case    BH3_FB_ONLY:
 		case	GENERIC_RGB_NOADF:
 		case	GENERIC_YCBCR_NOADF:
 		case	GENERIC_YCBCR_NOADF_2:
+#else
+		case	BHMINI_FB_ONLY:
+#endif
 			modelConfig->SupportScanSrc.bit.FB     = TRUE;		/* FlatBed				*/
 			modelConfig->SupportScanSrc.bit.ADF    = FALSE;		/* AutoDocumentFeeder	*/
 			break;
 
+#if BRSANESUFFIX == 2
 		default:
 			modelConfig->SupportScanSrc.bit.FB     = TRUE;		/* FlatBed				*/
 			modelConfig->SupportScanSrc.bit.ADF    = TRUE;		/* AutoDocumentFeeder	*/
 			break;
+#endif
 	}
 	return;
 }
@@ -736,6 +783,11 @@ void GetSupportScanAreaHeight(int series,PMODELCONFIG modelConfig)
 {
 	switch(series)
 	{
+#if BRSANESUFFIX == 1
+		case	BHMINI_FB_ONLY:
+			modelConfig->SupportScanAreaHeight = 297.0;
+			break;
+#endif
 	  //scan area of BH3,ALL and L4CFB are same.
 		default:
 #if 0  //M-LNX-58
@@ -766,6 +818,20 @@ void GetSupportScanAreaWidth(int series,PMODELCONFIG modelConfig)
 {
 	switch(series)
 	{
+#if BRSANESUFFIX == 1
+		case	BHL2_SF_TYPE:
+		case	BHL2_FB_DCP:
+			modelConfig->SupportScanAreaWidth = 210.0;
+			break;
+
+		case	ZL2_FB_DCP:
+			modelConfig->SupportScanAreaWidth = 212.0;
+			break;
+
+		default:
+			modelConfig->SupportScanAreaWidth = 208.0;
+			break;
+#else
 	  //scan area of BH3,ALL and L4CFB are same.
 		default:
 #if 0  //M-LNX-58
@@ -774,6 +840,7 @@ void GetSupportScanAreaWidth(int series,PMODELCONFIG modelConfig)
 			modelConfig->SupportScanAreaWidth = 215.9;
 #endif //M-LNX-58
 			break;
+#endif
 	}
 	return;
 }
@@ -809,6 +876,44 @@ void GetGrayLebelName(int series,PMODELINF modelInf,PMODELCONFIG modelConfig){
 #endif  //M-LNX-20
 	switch(series)						/* get filename from series number */
 	{
+#if BRSANESUFFIX == 1
+		case	YL4_SF_TYPE:
+			name = YL4_SF_TYPE_NAME;
+			break;
+		case	YL4_FB_DCP:
+			name = YL4_FB_DCP_NAME;
+			break;
+		case	ZLE_SF_TYPE:
+			name = ZLE_SF_TYPE_NAME;
+			break;
+		case	ZLE_FB_DCP:
+			name = ZLE_FB_DCP_NAME;
+			break;
+		case	ZL2_SF_TYPE:
+			name = ZL2_SF_TYPE_NAME;
+			break;
+		case	ZL2_FB_DCP:
+			name = ZL2_FB_DCP_NAME;
+			break;
+		case	BHL_SF_TYPE:
+			name = BHL_SF_TYPE_NAME;
+			break;
+		case	BHL_FB_DCP:
+			name = BHL_FB_DCP_NAME;
+			break;
+		case	BHM_FB_TYPE:
+			name = BHM_FB_TYPE_NAME;
+			break;
+		case	BHMINI_FB_ONLY:
+			name = BHMINI_FB_ONLY_NAME;
+			break;
+		case	BHL2_SF_TYPE:
+			name = BHL2_SF_TYPE_NAME;
+			break;
+		case	BHL2_FB_DCP:
+			name = BHL2_FB_DCP_NAME;
+			break;
+#endif
 		default:
 			name = NULL_S;				/* if not exist,set NULL */
 	}
@@ -850,6 +955,7 @@ void GetColorMatchName(int series,PMODELINF modelInf,PMODELCONFIG modelConfig){
 	/* get filename from series number */
 	switch(series)
 	{
+#if BRSANESUFFIX == 2
 		case	ALL_FB_DCP:
 		case	ALL_FB_ONLY:
 			name = ALL_FB_DCP_CM_NAME;
@@ -858,356 +964,7 @@ void GetColorMatchName(int series,PMODELINF modelInf,PMODELCONFIG modelConfig){
 		case    AL_DUPLEX:
 			name = AL_FB_DCP_CM_NAME;
 			break;
-		default:
-			name = NULL_S;	/* if not exist,set NULL */
-			break;
-	}
-	strcpy(modelConfig->szColorMatchName,name);
-	return;
-}
-
-int ChangeEndpoint[] = {AL_FB_DCP,AL_DUPLEX,L4CFB,GENERIC_YCBCR_MODEL_2,
-			GENERIC_YCBCR_NOADF_2,GENERIC_YCBCR_NOFB_2,
-			GENERIC_YCBCR_NOADF};  /* DCP-1510 = series 14 */
-
-#elif  BRSANESUFFIX == 1
-
-/*
-;------------------------------------------------------------------------------
-;	�⥸�塼��̾	: GetSupportReso
-;	��ǽ����		: ���ݡ��Ȳ����ټ���
-;	����			: ���꡼���ֹ�,��ǥ����깽¤�Υݥ���
-;	�����			: �ʤ�
-;	������			: 2003.08.11
-;	�õ�����		:
-;------------------------------------------------------------------------------
-;	�ѹ�����
-;	����		������	������
-;------------------------------------------------------------------------------
-*/
-void GetSupportReso(int series,PMODELCONFIG modelConfig)
-{
-	modelConfig->SupportReso.val   = 0x0000;						/* ����� */
-	switch(series)
-	{
-		case	YL4_SF_TYPE:
-			modelConfig->SupportReso.bit.bDpi100x100   = TRUE;		/*  100 x  100 dpi */
-			modelConfig->SupportReso.bit.bDpi150x150   = TRUE;		/*  150 x  150 dpi */
-			modelConfig->SupportReso.bit.bDpi200x200   = TRUE;		/*  200 x  200 dpi */
-			modelConfig->SupportReso.bit.bDpi300x300   = TRUE;		/*  300 x  300 dpi */
-			modelConfig->SupportReso.bit.bDpi400x400   = TRUE;		/*  400 x  400 dpi */
-			modelConfig->SupportReso.bit.bDpi600x600   = TRUE;		/*  600 x  600 dpi */
-			modelConfig->SupportReso.bit.bDpi1200x1200 = TRUE;		/* 1200 x 1200 dpi */
-			modelConfig->SupportReso.bit.bDpi2400x2400 = FALSE;		/* 2400 x 2400 dpi */
-			modelConfig->SupportReso.bit.bDpi4800x4800 = FALSE;		/* 4800 x 4800 dpi */
-			modelConfig->SupportReso.bit.bDpi9600x9600 = FALSE;		/* 9600 x 9600 dpi */
-			break;
-
-		case	BHL_SF_TYPE:
-		case	BHL2_SF_TYPE:
-			modelConfig->SupportReso.bit.bDpi100x100   = TRUE;		/*  100 x  100 dpi */
-			modelConfig->SupportReso.bit.bDpi150x150   = TRUE;		/*  150 x  150 dpi */
-			modelConfig->SupportReso.bit.bDpi200x200   = TRUE;		/*  200 x  200 dpi */
-			modelConfig->SupportReso.bit.bDpi300x300   = TRUE;		/*  300 x  300 dpi */
-			modelConfig->SupportReso.bit.bDpi400x400   = TRUE;		/*  400 x  400 dpi */
-			modelConfig->SupportReso.bit.bDpi600x600   = TRUE;		/*  600 x  600 dpi */
-			modelConfig->SupportReso.bit.bDpi1200x1200 = TRUE;		/* 1200 x 1200 dpi */
-			modelConfig->SupportReso.bit.bDpi2400x2400 = TRUE;		/* 2400 x 2400 dpi */
-			modelConfig->SupportReso.bit.bDpi4800x4800 = FALSE;		/* 4800 x 4800 dpi */
-			modelConfig->SupportReso.bit.bDpi9600x9600 = FALSE;		/* 9600 x 9600 dpi */
-			break;
-
-		default:
-			modelConfig->SupportReso.bit.bDpi100x100   = TRUE;		/*  100 x  100 dpi */
-			modelConfig->SupportReso.bit.bDpi150x150   = TRUE;		/*  150 x  150 dpi */
-			modelConfig->SupportReso.bit.bDpi200x200   = TRUE;		/*  200 x  200 dpi */
-			modelConfig->SupportReso.bit.bDpi300x300   = TRUE;		/*  300 x  300 dpi */
-			modelConfig->SupportReso.bit.bDpi400x400   = TRUE;		/*  400 x  400 dpi */
-			modelConfig->SupportReso.bit.bDpi600x600   = TRUE;		/*  600 x  600 dpi */
-			modelConfig->SupportReso.bit.bDpi1200x1200 = TRUE;		/* 1200 x 1200 dpi */
-			modelConfig->SupportReso.bit.bDpi2400x2400 = TRUE;		/* 2400 x 2400 dpi */
-			modelConfig->SupportReso.bit.bDpi4800x4800 = TRUE;		/* 4800 x 4800 dpi */
-			modelConfig->SupportReso.bit.bDpi9600x9600 = TRUE;		/* 9600 x 9600 dpi */
-	}
-
-	return;
-}
-
-/*
-;------------------------------------------------------------------------------
-;	�⥸�塼��̾	: GetSupportScanMode
-;	��ǽ����		: ���ݡ���ScanMode����
-;	����			: ���꡼���ֹ�,��ǥ����깽¤�Υݥ���
-;	�����			: �ʤ�
-;	������			: 2003.08.11
-;	�õ�����		:
-;------------------------------------------------------------------------------
-;	�ѹ�����
-;	����		������	������
-;------------------------------------------------------------------------------
-*/
-void GetSupportScanMode(int series,PMODELCONFIG modelConfig)
-{
-	modelConfig->SupportScanMode.val = 0x0000;								/* ����� */
-	switch(series)
-	{
-		case	YL4_SF_TYPE:
-		case	ZLE_SF_TYPE:
-		case	ZL2_SF_TYPE:
-			modelConfig->SupportScanMode.bit.bBlackWhite     = TRUE;		/* ����(���)		*/
-			modelConfig->SupportScanMode.bit.bErrorDiffusion = TRUE;		/* �����Ȼ�			*/
-			modelConfig->SupportScanMode.bit.bTrueGray       = TRUE;		/* ���졼��������	*/
-			modelConfig->SupportScanMode.bit.b24BitColor     = FALSE;		/* 24bit���顼		*/
-			modelConfig->SupportScanMode.bit.b24BitNoCMatch  = FALSE;		/* 24bit���顼��®��ColorMatch�ʤ���*/
-			break;
-
-		case	YL4_FB_DCP:
-		case	ZLE_FB_DCP:
-		case	ZL2_FB_DCP:
-			modelConfig->SupportScanMode.bit.bBlackWhite     = TRUE;		/* ����(���)		*/
-			modelConfig->SupportScanMode.bit.bErrorDiffusion = TRUE;		/* �����Ȼ�			*/
-			modelConfig->SupportScanMode.bit.bTrueGray       = TRUE;		/* ���졼��������	*/
-			modelConfig->SupportScanMode.bit.b24BitColor     = TRUE;		/* 24bit���顼		*/
-			modelConfig->SupportScanMode.bit.b24BitNoCMatch  = TRUE;		/* 24bit���顼��®��ColorMatch�ʤ���*/
-			break;
-
-		default:
-			modelConfig->SupportScanMode.bit.bBlackWhite     = TRUE;		/* ����(���)		*/
-			modelConfig->SupportScanMode.bit.bErrorDiffusion = TRUE;		/* �����Ȼ�			*/
-			modelConfig->SupportScanMode.bit.bTrueGray       = TRUE;		/* ���졼��������	*/
-			modelConfig->SupportScanMode.bit.b24BitColor     = TRUE;		/* 24bit���顼		*/
-			modelConfig->SupportScanMode.bit.b24BitNoCMatch  = FALSE;		/* 24bit���顼��®��ColorMatch�ʤ���*/
-			break;
-	}
-	return;
-}
-
-/*
-;------------------------------------------------------------------------------
-;	�⥸�塼��̾	: GetSupportScanSrc
-;	��ǽ����		: ���ݡ���ScanSrc����
-;	����			: ���꡼���ֹ�,��ǥ����깽¤�Υݥ���
-;	�����			: �ʤ�
-;	������			: 2003.08.11
-;	�õ�����		:
-;------------------------------------------------------------------------------
-;	�ѹ�����
-;	����		������	������
-;------------------------------------------------------------------------------
-*/
-#if 0   //M-LNX-20
-void GetSupportScanSrc(int series,PMODELCONFIG modelConfig)
-{
-
-	modelConfig->SupportScanSrc.val = 0x0000;					/* ����� */
-#else   //M-LNX-20
-void GetSupportScanSrc(int series,PMODELINF modelInf ,PMODELCONFIG modelConfig){
-	modelConfig->SupportScanSrc.val = 0x0000;					/* ����� */
-	if( (modelInf->expcaps & EXP_CAPDUPLEX) != 0){
-	  modelConfig->SupportScanSrc.bit.ADF_DUP    = TRUE;		/* Duplex capability TRUE */
-	}
-	else{
-	  modelConfig->SupportScanSrc.bit.ADF_DUP    = FALSE;		/* Duplex capability FALSE */
-	}
-#endif  //M-LNX-20
-	switch(series)
-	{
-		case	YL4_SF_TYPE:
-		case	ZLE_SF_TYPE:
-		case	ZL2_SF_TYPE:
-		case	BHL_SF_TYPE:
-		case	BHL2_SF_TYPE:
-			modelConfig->SupportScanSrc.bit.FB     = FALSE;		/* FlatBed				*/
-			modelConfig->SupportScanSrc.bit.ADF    = TRUE;		/* AutoDocumentFeeder	*/
-			break;
-
-		case	YL4_FB_DCP:
-		case	ZLE_FB_DCP:
-		case	ZL2_FB_DCP:
-		case	BHL_FB_DCP:
-		case	BHM_FB_TYPE:
-		case	BHL2_FB_DCP:
-			modelConfig->SupportScanSrc.bit.FB     = TRUE;		/* FlatBed				*/
-			modelConfig->SupportScanSrc.bit.ADF    = TRUE;		/* AutoDocumentFeeder	*/
-			break;
-
-		case	BHMINI_FB_ONLY:
-			modelConfig->SupportScanSrc.bit.FB     = TRUE;		/* FlatBed				*/
-			modelConfig->SupportScanSrc.bit.ADF    = FALSE;		/* AutoDocumentFeeder	*/
-			break;
-	}
-	return;
-}
-
-/*
-;------------------------------------------------------------------------------
-;	�⥸�塼��̾	: GetSupportScanAreaHeight
-;	��ǽ����		: ���ݡ����ɤ߹����ϰ�Ĺ����
-;	����			: ���꡼���ֹ�,��ǥ����깽¤�Υݥ���
-;	�����			: �ʤ�
-;	������			: 2003.08.21
-;	�õ�����		:
-;------------------------------------------------------------------------------
-;	�ѹ�����
-;	����		������	������
-;------------------------------------------------------------------------------
-*/
-void GetSupportScanAreaHeight(int series,PMODELCONFIG modelConfig)
-{
-	switch(series)
-	{
-		case	BHMINI_FB_ONLY:
-			modelConfig->SupportScanAreaHeight = 297.0;
-			break;
-		default:
-			modelConfig->SupportScanAreaHeight = 355.6;
-			break;
-	}
-	return;
-}
-
-/*
-;------------------------------------------------------------------------------
-;	�⥸�塼��̾	: GetSupportScanAreaWidth
-;	��ǽ����		: ���ݡ����ɤ߹����ϰ�������
-;	����			: ���꡼���ֹ�,��ǥ����깽¤�Υݥ���
-;	�����			: �ʤ�
-;	������			: 2003.08.11
-;	�õ�����		:
-;------------------------------------------------------------------------------
-;	�ѹ�����
-;	����		������	������
-;------------------------------------------------------------------------------
-*/
-void GetSupportScanAreaWidth(int series,PMODELCONFIG modelConfig)
-{
-	switch(series)
-	{
-		case	BHL2_SF_TYPE:
-		case	BHL2_FB_DCP:
-			modelConfig->SupportScanAreaWidth = 210.0;
-			break;
-
-		case	ZL2_FB_DCP:
-			modelConfig->SupportScanAreaWidth = 212.0;
-			break;
-
-		default:
-			modelConfig->SupportScanAreaWidth = 208.0;
-			break;
-	}
-	return;
-}
-
-/*
-;------------------------------------------------------------------------------
-;	�⥸�塼��̾	: GetGrayLebelName
-;	��ǽ����		: ���쥤��٥��ѥǡ���̾
-;	����			: ���꡼���ֹ�,��ǥ����깽¤�Υݥ���
-;	�����			: �ʤ�
-;	������			: 2003.08.11
-;	�õ�����		:
-;------------------------------------------------------------------------------
-;	�ѹ�����
-;	����		������	������
-;------------------------------------------------------------------------------
-*/
-#if 0  //M-LNX-20
-void GetGrayLebelName(int series,PMODELCONFIG modelConfig)
-{
-	char	*name;
-#else  //M-LNX-20
-void GetGrayLebelName(int series,PMODELINF modelInf,PMODELCONFIG modelConfig){
-	char	*name;
-	name = (get_p_model_info_by_index(modelInf->index))->graylevelTBL;
-	if(name){
-	  if(*name){
-	    strcpy(modelConfig->szGrayLebelName,name);
-	    return;
-	  }
-	}
-#endif  //M-LNX-20
-
-	switch(series)						/* ���꡼��No����Name����� */
-	{
-		case	YL4_SF_TYPE:
-			name = YL4_SF_TYPE_NAME;
-			break;
-		case	YL4_FB_DCP:
-			name = YL4_FB_DCP_NAME;
-			break;
-		case	ZLE_SF_TYPE:
-			name = ZLE_SF_TYPE_NAME;
-			break;
-		case	ZLE_FB_DCP:
-			name = ZLE_FB_DCP_NAME;
-			break;
-		case	ZL2_SF_TYPE:
-			name = ZL2_SF_TYPE_NAME;
-			break;
-		case	ZL2_FB_DCP:
-			name = ZL2_FB_DCP_NAME;
-			break;
-		case	BHL_SF_TYPE:
-			name = BHL_SF_TYPE_NAME;
-			break;
-		case	BHL_FB_DCP:
-			name = BHL_FB_DCP_NAME;
-			break;
-		case	BHM_FB_TYPE:
-			name = BHM_FB_TYPE_NAME;
-			break;
-		case	BHMINI_FB_ONLY:
-			name = BHMINI_FB_ONLY_NAME;
-			break;
-		case	BHL2_SF_TYPE:
-			name = BHL2_SF_TYPE_NAME;
-			break;
-		case	BHL2_FB_DCP:
-			name = BHL2_FB_DCP_NAME;
-			break;
-		default:
-			name = NULL_S;				/* ���������Τ��ʤ����NULL */
-	}
-	strcpy(modelConfig->szGrayLebelName,name);
-	return;
-}
-
-
-/*
-;------------------------------------------------------------------------------
-;	�⥸�塼��̾	: GetColorMatchName
-;	��ǽ����		: ���顼�ޥå����ѥǡ���̾
-;	����			: ���꡼���ֹ�,��ǥ����깽¤�Υݥ���
-;	�����			: �ʤ�
-;	������			: 2003.08.11
-;	�õ�����		:
-;------------------------------------------------------------------------------
-;	�ѹ�����
-;	����		������	������
-;------------------------------------------------------------------------------
-*/
-
-#if 0  //M-LNX-20
-void GetColorMatchName(int series,PMODELCONFIG modelConfig)
-{
-	char	*name;
-#else  //M-LNX-20
-void GetColorMatchName(int series,PMODELINF modelInf,PMODELCONFIG modelConfig){
-	char	*name;
-	name = (get_p_model_info_by_index(modelInf->index))->colmatchTBL;
-	if(name){
-	  if(*name){
-	    strcpy(modelConfig->szColorMatchName,name);
-	    return;
-	  }
-	}
-#endif  //M-LNX-20
-
-
-	/* ���꡼���ֹ�ˤ��Name����� */
-	switch(series)
-	{
+#else
 		case	YL4_FB_DCP:
 			name = YL4_FB_DCP_CM_NAME;
 			break;
@@ -1217,19 +974,22 @@ void GetColorMatchName(int series,PMODELINF modelInf,PMODELCONFIG modelConfig){
 		case	ZL2_FB_DCP:
 			name = ZL2_FB_DCP_CM_NAME;
 			break;
+#endif
 		default:
-			name = NULL_S;	/* ���������Τ��ʤ����NULL */
+			name = NULL_S;	/* if not exist,set NULL */
 			break;
 	}
 	strcpy(modelConfig->szColorMatchName,name);
 	return;
 }
 
+#if BRSANESUFFIX == 2
+int ChangeEndpoint[] = {AL_FB_DCP,AL_DUPLEX,L4CFB,GENERIC_YCBCR_MODEL_2,
+			GENERIC_YCBCR_NOADF_2,GENERIC_YCBCR_NOFB_2,
+			GENERIC_YCBCR_NOADF};  /* DCP-1510 = series 14 */
+#else
 int ChangeEndpoint[] = {14, 10};  /* DCP-1510: series 14, remapped to BHMINI_FB_ONLY=10 */
-
-#else    //BRSANESUFFIX
-  force causing compile error
-#endif   //BRSANESUFFIX
+#endif
 
 /*
 ;------------------------------------------------------------------------------
