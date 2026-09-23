@@ -23,11 +23,14 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <setjmp.h>
 #include <time.h>
 #include <unistd.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
 
 #include <usb.h>
 #include <jpeglib.h>
@@ -179,9 +182,16 @@ brscan5_apply_model_profile(const struct brscan5_model_profile *p,
  * 302/308 ms in usbmon4.log/usbmon-scan.log). Skipped in replay. */
 #define BRSCAN5_CTRL_REOPEN_MS  300
 
-/* Host URB buffer for the data phase (device max data URB is 262144 B;
- * a few extra bytes of headroom for safety). */
-#define BRSCAN5_DATA_URB_MAX    262160
+/* Host URB buffer for the data phase. The device's max data URB is
+ * 262144 B and the vendor driver reads exactly that size. The original
+ * 262160 (+16 headroom) made the libusb-0.1 16-KiB chunking emit a
+ * stray 16-byte tail URB after every 256-KiB boundary, which trips a
+ * firmware buffer-management bug: the device stalls USB flow 90-105 ms
+ * and emits exactly one garbage restart interval at stream positions
+ * at/near 2^18-multiples in the JPEG byte stream (corruption bands in
+ * the decoded page). Requesting exactly 262144 B keeps the chunking a
+ * clean 16 x 16384 with no tail URB and the corruption is gone. */
+#define BRSCAN5_DATA_URB_MAX    262144
 
 static void brscan5_on_event(const br5_event_t *ev, void *userdata);
 
@@ -220,6 +230,8 @@ struct brscan5_session {
     JSAMPROW       row_buf;      /* scratch scanline (decoded)         */
     size_t         row_bytes;    /* decoded bytes per scanline         */
     long           lines_out;    /* scanlines delivered to frontend    */
+    long           jpeg_end_row; /* first filler row (EOI hit early);  */
+                                 /* -1 = unknown, deliver SOF height   */
     SANE_Parameters params;      /* SANE parameters of the active page */
 
     /* image dimensions: estimated from the options before sane_start
@@ -319,8 +331,9 @@ brscan5_usb_read(void *ctx, uint8_t *buf, size_t len, size_t *got)
      * budget runs out, then the read fails with IO_ERROR. */
     deadline = brscan5_now_ms() + idle_ms;
     for (;;) {
-        int rc = usb_bulk_read(this->hScanner->usb, u->ep_in,
-                               (char *)buf, (int)len, BRSCAN5_TIMEOUT_URB);
+        int rc;
+        rc = usb_bulk_read(this->hScanner->usb, u->ep_in,
+                           (char *)buf, (int)len, BRSCAN5_TIMEOUT_URB);
         if (rc > 0) {
             *got = (size_t)rc;
             return 0;
@@ -400,8 +413,11 @@ brscan5_usb_reset(void *ctx)
 static void
 brscan5_usb_close(brscan5_transport_t *t)
 {
+    brscan5_usb_t *u;
+
     if (!t || !t->ctx)
         return;
+    u = (brscan5_usb_t *)t->ctx;
     free(t->ctx);
     t->ctx = NULL;
     t->write = NULL;
@@ -548,9 +564,15 @@ brscan5_get_parameters(Brother_Scanner *this, SANE_Parameters *p)
         return SANE_STATUS_INVAL;
 
     /* After sane_start the page JPEG header has been read: report the
-     * real decoded dimensions. Before that: estimate from the options. */
+     * real decoded dimensions. Before that: estimate from the options.
+     * With the Bug A crop the actual page is shorter than the SOF
+     * height (window > page) — report the cropped height so the
+     * frontend buffer and the output dimensions stay consistent. */
     if (s && s->have_real) {
-        brscan5_fill_params(p, s->real_w, s->real_h,
+        long h = s->real_h;
+        if (s->jpeg_end_row >= 0 && s->jpeg_end_row < h)
+            h = s->jpeg_end_row;
+        brscan5_fill_params(p, s->real_w, h,
                             this->uiSetting.wColorType);
     } else {
         long w, h;
@@ -712,6 +734,7 @@ static SANE_Status
 brscan5_decoder_start(brscan5_session_t *s, Brother_Scanner *this)
 {
     s->dec_active = 0;
+    s->jpeg_end_row = -1;
     if (s->rle_mode)
         return brscan5_rle_decode(s, this);
     memset(&s->cinfo, 0, sizeof(s->cinfo));
@@ -749,6 +772,43 @@ brscan5_decoder_start(brscan5_session_t *s, Brother_Scanner *this)
     s->real_w = s->cinfo.output_width;
     s->real_h = s->cinfo.output_height;
     s->have_real = 1;
+
+    /* Bug A (gray bottom edge): the device encodes only the actual page
+     * (220 restart intervals = 3520 rows for A4 at 300 dpi) while the
+     * window-configured SOF height covers the whole window (4200 rows).
+     * libjpeg fills everything past the EOI with neutral gray. Count
+     * the restart intervals in the received stream (ff d0-d7 markers;
+     * byte stuffing keeps ff d0-d7 out of entropy data) and end the
+     * page after that many intervals — the same row count the vendor
+     * driver delivers. */
+    {
+        unsigned int dri = s->cinfo.restart_interval;
+        unsigned int mpr = s->cinfo.MCUs_per_row;
+        long interval_rows, n_rst = 0;
+        const uint8_t *p, *end = s->page_buf + s->page_len;
+
+        interval_rows = mpr
+            ? ((dri + mpr - 1) / mpr) *
+              (long)s->cinfo.comp_info[0].MCU_height * 8 : 0;
+        /* first ff da = SOS; count restart markers from there */
+        for (p = s->page_buf; p + 1 < end; p++)
+            if (p[0] == 0xff && p[1] == 0xda)
+                break;
+        if (p + 1 < end) {
+            for (p += 2; p + 1 < end; p++)
+                if (p[0] == 0xff && p[1] >= 0xd0 && p[1] <= 0xd7) {
+                    n_rst++;
+                    p++;
+                }
+            if (interval_rows > 0)
+                s->jpeg_end_row = (n_rst + 1) * interval_rows;
+        }
+        if (s->jpeg_end_row > s->real_h)
+            s->jpeg_end_row = -1;      /* implausible: no crop */
+        DBG(3,   "brscan5 decoder: %ld restart intervals, "
+                 "interval_rows %ld, jpeg_end_row %ld\n",
+                 n_rst, interval_rows, s->jpeg_end_row);
+    }
 
     brscan5_fill_params(&s->params, s->real_w, s->real_h,
                         this->uiSetting.wColorType);
@@ -1209,6 +1269,28 @@ brscan5_on_event(const br5_event_t *ev, void *userdata)
     case BR5_EV_JPEG_EOI:
         /* Whole page JPEG now complete in the session page buffer; the
          * libjpeg decoder is created by brscan5_start()/brscan5_read(). */
+        /* Debug aid (BROTHER5_RAW_DUMP=<dir>, live and replay): write
+         * the as-received page JPEG for offline forensic analysis
+         * (e.g. jpegwarn / restart-marker ledger). One file per page. */
+        {
+            const char *dump_dir = getenv("BROTHER5_RAW_DUMP");
+            if (dump_dir && dump_dir[0] && s->page_buf && s->page_len) {
+                char path[512];
+                static unsigned dump_seq;
+                snprintf(path, sizeof(path), "%s/scan-%d-%03u.jpg",
+                         dump_dir, (int)getpid(), ++dump_seq);
+                FILE *f = fopen(path, "wb");
+                if (f) {
+                    fwrite(s->page_buf, 1, s->page_len, f);
+                    fclose(f);
+                    DBG(3,   "brscan5: raw page dump %s (%zu B)\n",
+                             path, s->page_len);
+                } else {
+                    DBG(1,   "brscan5: raw page dump open failed: %s\n",
+                             path);
+                }
+            }
+        }
         s->page_ready = 1;
         break;
     case BR5_EV_PAGE_END:
@@ -1248,6 +1330,7 @@ brscan5_pump(brscan5_session_t *s)
 
     /* Data phase: 30 s idle budget (vs 5 s for command responses). */
     s->tport.idle_timeout_ms = BRSCAN5_TIMEOUT_DATA;
+
     for (;;) {
         if (s->tport.read(s->tport.ctx, urb, sizeof(urb), &got) != 0) {
             DBG(1,   "brscan5_pump: transport read error\n");
@@ -1376,15 +1459,25 @@ brscan5_read(Brother_Scanner *this, char *buf, int maxlen, int *len)
         s->eof = 1;
         return SANE_STATUS_IO_ERROR;
     }
-    while ((long)s->lines_out < p->lines &&
-           filled + (size_t)line_bytes <= (size_t)maxlen) {
-        JSAMPLE *rowptr[1];
+    /* Bug A: end the page at the last real scanline. jpeg_end_row is
+     * the exact restart-interval row count of the received stream
+     * (see brscan5_decoder_start); the SOF height covers the whole
+     * window only. params.lines stays at the SOF height (reported at
+     * sane_start); the frontend just gets EOF earlier. */
+    {
+        long max_lines = (long)p->lines;
+        if (s->jpeg_end_row >= 0 && s->jpeg_end_row < max_lines)
+            max_lines = s->jpeg_end_row;
+        while ((long)s->lines_out < max_lines &&
+               filled + (size_t)line_bytes <= (size_t)maxlen) {
+            JSAMPLE *rowptr[1];
 
-        rowptr[0] = (JSAMPROW)s->row_buf;
-        if (jpeg_read_scanlines(&s->cinfo, rowptr, 1) < 1)
-            break;                       /* truncated stream */
-        filled += brscan5_emit_row(s, (unsigned char *)buf + filled);
-        s->lines_out++;
+            rowptr[0] = (JSAMPROW)s->row_buf;
+            if (jpeg_read_scanlines(&s->cinfo, rowptr, 1) < 1)
+                break;                   /* truncated stream */
+            filled += brscan5_emit_row(s, (unsigned char *)buf + filled);
+            s->lines_out++;
+        }
     }
     if (filled) {
         *len = (SANE_Int)filled;
@@ -1392,9 +1485,16 @@ brscan5_read(Brother_Scanner *this, char *buf, int maxlen, int *len)
     }
 
     /* All scanlines delivered: finish the decoder, free the page JPEG
-     * buffer and drain the trailing records (PAGE_END/SESSION_END). */
-    if (jpeg_finish_decompress(&s->cinfo))
-        DBG(3,   "brscan5 read: page decoded (%ld lines)\n", s->lines_out);
+     * buffer and drain the trailing records (PAGE_END/SESSION_END).
+     * With the Bug A crop the stream is intentionally shorter than the
+     * SOF height — jpeg_finish_decompress() would try to skip the
+     * remaining rows and die on the mid-scan EOI, so skip it. */
+    if (s->jpeg_end_row >= 0 && s->jpeg_end_row < (long)p->lines)
+        DBG(3,   "brscan5 read: page decoded (%ld lines, cropped)\n",
+                 s->lines_out);
+    else if (jpeg_finish_decompress(&s->cinfo))
+        DBG(3,   "brscan5 read: page decoded (%ld lines)\n",
+                 s->lines_out);
     brscan5_decoder_teardown(s);
     brscan5_drain(s);
     return SANE_STATUS_EOF;

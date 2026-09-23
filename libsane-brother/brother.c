@@ -694,7 +694,6 @@ sane_open (SANE_String_Const devicename, SANE_Handle *handle)
 	    //(M-LNX-24 2006/04/11 kado for Fedora5 USB2.0)
 	    //errornum = usb_set_configuration(this->hScanner->usb, 1);
 	    usb_set_configuration_or_reset_toggle(this, 1);
-
 	    if (usb_claim_interface(this->hScanner->usb, 1))
 		return SANE_STATUS_IO_ERROR;
 	}
