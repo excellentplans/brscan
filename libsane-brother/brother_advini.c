@@ -224,31 +224,6 @@ int scan_model_directory(){
   return 0;
 }
 
-//------------------------------------
-//
-//
-//------------------------------------
-sane_model_info  get_model_info_from_ini_by_product_id(int id){
-  static sane_model_info *current = NULL;
-  static int pre_id=-1;
-
-  if(id == pre_id && current != NULL){
-    return *current;
-  }
-  scan_model_directory();
-  current = root_adv_model;
-  while(current){
-    if(current->pid == id){
-      pre_id = id;
-      return *current;
-    }
-    current = current->next;
-  }
-  pre_id=-1;
-  current = &ERRORINFO;
-  return ERRORINFO;
-}
-
 sane_model_info  *get_p_model_info_from_ini_by_product_id(int id){
   static sane_model_info *current = NULL;
   static int pre_id=-1;
@@ -608,63 +583,4 @@ char *get_net_ini_value_by_name(char *name ,int key, char *value, int size){
   return value;
 }
 
-//------------------ for debug---------------------------
-#ifdef DEBUGMAIN
 
-char *debug_disp_netini(){
-  netini *current_netini;
-
-  if(root_netini == NULL)init_netini();
-  current_netini = root_netini;
-
-  while(current_netini){
-    printf("%s %s %s %s %s\n",
-	   current_netini->friendlyname,
-	   current_netini->model,
-	   current_netini->ip,
-	   current_netini->node,
-	   current_netini->id
-	   );
-    current_netini = current_netini->next;
-  }
-  return NULL;
-}
-
-int main(){
-  char value[100];
-  sane_model_info target;
-
-  printf("debug_disp\n");
-
-  printf("0x0333      %s %d\n",
-	   (get_p_model_info_by_index(0))->model_name,
-	   (get_p_model_info_by_index(1))->func_type);
-  printf("0x0174      %s %d\n",
-	   (get_p_model_info_from_ini_by_product_id(0x0174))->model_name,
-	   (get_p_model_info_from_ini_by_product_id(0x0174))->func_type);
-
-  target = get_model_info_from_ini_by_product_id(0x0333);
-  printf("0x0333      %s %d\n",
-	   target.model_name,
-	   target.func_type);
-
-
-  target = get_model_info_from_ini_by_product_id(0x0174);
-  printf("0x0174      %s %d\n",
-	   target.model_name,
-	   target.func_type);
-
-  debug_disp_model_info();
-
-  debug_disp_netini();
-
-  printf("1 %s\n",get_net_ini_value(1,KEY_IP,value,sizeof(value)) );
-  printf("2 %s\n",get_net_ini_value(0,KEY_NODE,value,sizeof(value)) );
-
-
-  free_net_inifile_tree();
-  free_inifile_tree();
-  return 0;
-}
-
-#endif

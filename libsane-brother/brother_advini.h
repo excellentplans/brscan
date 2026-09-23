@@ -49,7 +49,6 @@ typedef struct _sane_model_info  {
 
 #define MODELSECTION "[Support Model]"
 
-sane_model_info  get_model_info_from_ini_by_product_id(int id);
 sane_model_info  *get_p_model_info_from_ini_by_product_id(int id);
 int free_inifile_tree();
 
