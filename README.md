@@ -2,7 +2,20 @@
 
 Fully open-source SANE backend for Brother MFC/DCP scanners, tested on **Raspberry Pi** and **NanoPi NEO** (ARM). Produces pixel-perfect scans on Brother DCP-1510 without any proprietary binary blobs.
 
+## About this fork
+
+I forked because I wanted to get my DS-640 with the newer brscan5 protocol to run on ARM (Raspberry Pi 4). The driver is vibe-coded with GLM-5.3-Flash, so everybody should use and redistribute with that in mind. In the same vein, I cleaned up and tested the driver, but could physically only test on the DS-640/Raspberry Pi combo.
+
 The source code originates from the Brother [download page](http://www.brother.com/cgi-bin/agreement/agreement.cgi?dlfile=http://www.brother.com/pub/bsc/linux/dlf/brscan3-src-0.2.11-5.tar.gz&lang=English_source) and has been significantly cleaned and extended.
+
+## Provenance
+
+This code has passed through several hands, each building on the previous:
+
+- **Brother Industries** — released the original brscan3 source under the Brother license preserved in `copying.brother` (though it shipped two proprietary binary blobs with no source).
+- **[neicker/brscan](https://github.com/neicker/brscan)** — Norbert Eicker's initial open-source packaging and cleanup.
+- **[dmikushin/brscan](https://github.com/dmikushin/brscan)** — Dmitry Mikushin reverse-engineered the binary blobs (`libbrscandec`, `libbrcolm`) and the brscan4 protocol; see "What was done" below.
+- **[excellentplans/brscan](https://github.com/excellentplans/brscan)** — this fork: the brscan5/DS-640 support described above.
 
 ## What was done
 
@@ -49,7 +62,7 @@ sudo make install
 sudo sh -c "echo brother >> /etc/sane.d/dll.conf"
 ```
 
-Pre-built binaries for amd64, arm64, and armv7 are published as GitHub releases — see [Releases](https://github.com/dmikushin/brscan/releases).
+Pre-built binaries for amd64, arm64, and armv7 are published as GitHub releases — see [Releases](https://github.com/excellentplans/brscan/releases).
 
 ## USB Permissions
 
@@ -92,7 +105,7 @@ Available scan modes: `Black & White`, `Gray[Error Diffusion]`, `True Gray`, `24
 
 ## Tests
 
-Tests cover: brscan4 frame structure, packbits decompression (including ARM `signed char` edge cases), ScanDecOpen parameter computation, full decode pipeline, color matching, and end-to-end JPEG color decode.
+Tests cover: brscan4 frame structure, packbits decompression (including ARM `signed char` edge cases), ScanDecOpen parameter computation, full decode pipeline, color matching, and end-to-end JPEG color decode. The brscan5 layer adds protocol-encoder unit tests, RLENGTH/record stream tests, and full replay-driven SANE lifecycle tests with fault injection (`tests/test_brscan5_*.c`), all hardware-free via `BROTHER5_REPLAY` fixtures in `tests/data/brscan5/`. Run everything with `ctest` from the build directory.
 
 ## Debug Logging
 
@@ -119,4 +132,4 @@ libsane-brother.so.1    SANE backend (talks USB, parses scan protocol)
 
 ## License
 
-GPL v2 (original Brother license preserved).
+GPL v2 or later — see [Copying](Copying). The original Brother license terms are preserved in [copying.brother](copying.brother), and [copying.lib](copying.lib) (LGPL 2.1) covers the library sources inherited from the original Brother distribution.
