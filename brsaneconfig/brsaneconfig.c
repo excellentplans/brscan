@@ -14,9 +14,6 @@
 //*
 
 
-//#define  SUPPORT_INTERACTIVE
-
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -189,11 +186,6 @@ int get_config_from_commandline(char **arg,  int argc,
   return ret;
 }
 
-int mySystem(const char *command)
-{
-    return system(command);
-}
-
 int check_ipaddress_is_valid(char *ip){
   char c;
   int len;
@@ -265,28 +257,11 @@ int add_network_device(char **arg,int argc){
 				     node,sizeof(node),
 				     id,sizeof(id));
   }
-#ifdef SUPPORT_INTERACTIVE
-  else{
-    rc = get_config_from_by_ui(
-			       friendly,sizeof(friendly),
-			       model,sizeof(model),
-			       port,sizeof(port),
-			       ip,sizeof(ip),
-			       node,sizeof(node),
-			       id,sizeof(id));
-  }
-#else  //SUPPORT_INTERACTIVE
   else{
     printf(INVALIDPARAMETERN,0);
     return 0;
   }
-#endif  //SUPPORT_INTERACTIVE
 
-
-#ifdef _DEBUG
-  printf("set_current_config %s %s %s %s %s   %d\n",
-	 model,port,ip,node,id,rc);
-#endif
 
   if(rc == -1){
     return 1;
@@ -323,7 +298,7 @@ int add_network_device(char **arg,int argc){
       fclose(fp);
       copy_file(CONFFILE ,tmpconffile ,"a");
       sprintf(uniq,"uniq %s > %s",tmpconffile,CONFFILE);
-      mySystem(uniq);
+      system(uniq);
     }
   }
   else  if(*ip != 0 || !check_ipaddress_is_valid(ip)){
@@ -337,11 +312,7 @@ int add_network_device(char **arg,int argc){
 }
 
 int remove_network_device(char *label[], int n){
-#if 0   //M-LNX-37
-  char filter[100];
-#else   //M-LNX-37
   char filter[512];
-#endif   //M-LNX-37
   char tmpconffile[32]=BRSANETMPFILE;
   int tmp;
   int i;
@@ -356,7 +327,7 @@ int remove_network_device(char *label[], int n){
     copy_file(CONFFILE ,tmpconffile ,"w");
     sprintf(filter,"cat %s | sed s/'DEVICE=%s .*$'// | uniq > %s",
 	  tmpconffile,label[i],CONFFILE);
-    mySystem(filter);
+    system(filter);
     unlink(tmpconffile);
   }
   return 0;
@@ -428,11 +399,6 @@ int query_available_models(){
   return 1;
 }
 
-int set_sane_initial_config(void){
-  return 1;
-}
-
-
 int  system2(char *command){
   puts(command);
   fflush(stdout);
@@ -476,13 +442,13 @@ int scan_and_cat_for_diagnosis(){
     printf("-----------------------------\n%s:\n",CONFFILE);
     fflush(stdout);
     sprintf(command,"cat %s",CONFFILE);
-    mySystem(command);
+    system(command);
 
 
     printf("-----------------------------\n%s:\n",MAININIFILE);
     fflush(stdout);
     sprintf(command,"cat %s",MAININIFILE);
-    mySystem(command);
+    system(command);
 
 
     while((entry = readdir(dir))){
@@ -491,7 +457,7 @@ int scan_and_cat_for_diagnosis(){
 	     MODELINIDIR,  entry->d_name);
       fflush(stdout);
       sprintf(command,"cat %s/%s",MODELINIDIR,entry->d_name);
-      mySystem(command);
+      system(command);
     }
     closedir(dir);
   }
@@ -569,7 +535,7 @@ int loggingon(){
   fclose(fp);
   copy_file(CONFFILE ,tmpconffile ,"a");
   sprintf(uniq,"uniq %s > %s",tmpconffile,CONFFILE);
-  mySystem(uniq);
+  system(uniq);
   unlink(tmpconffile);
   return 0;
 }
@@ -585,7 +551,7 @@ int loggingoff(){
 
   copy_file(CONFFILE ,tmpconffile ,"a");
   sprintf(filter,"cat %s | sed s/'log=.*'// | uniq > %s",tmpconffile,CONFFILE);
-  mySystem(filter);
+  system(filter);
   unlink(tmpconffile);
   return 0;
 }
@@ -631,7 +597,6 @@ int main(int argc , char *argv[]){
     remove_network_device(argv,argc);
     break;
   case OPTION_I:
-    set_sane_initial_config();
     break;
   case OPTION_D:
     brsane_diagnosis();
@@ -659,88 +624,3 @@ int main(int argc , char *argv[]){
   return 0;
 }
 
-
-
-
-
-
-
-#ifdef SUPPORT_INTERACTIVE
-int get_config_from_by_ui(
-				char *friendly,int nfriendly,
-				char *model,int nmodel,
-				char *port, int nport,
-				char *ip,   int nip,
-				char *node, int nnode,
-				char *id,   int nid){
-  char c,*p;
-  int  vid,pid;
-  if(nid <= (int)sizeof("0xnnnn:0xnnnn"))return -1;
-  if(nport  <= 4 )return -1;
-  if(nnode  <= 16)return -1;
-  if(nmodel <= 32)return -1;
-
-  *model = 0;
-  *port = 0;
-  *ip = 0;
-  *node = 0;
-  *id = 0;
-
-  scan_model_directory();
-  while(1){
-    printf("Input friendly name ->");
-    fgets(friendly,nfriendly,stdin);
-    if(!check_friendly_name(friendly)){
-      puts("Invalid friendly name");
-      continue;
-    }
-    if((p=strchr(friendly,'\n')))*p=0;
-    break;
-  }
-  while(1){
-    printf("Input model name ->");
-    model[0] = '\"';
-    fgets(model+1,nmodel-2,stdin);
-
-    reform_line(model);
-    strcat(model,"\"");
-    if(check_model_name_available(model)){
-      break;
-    }
-  }
-  printf("Select the network address type\n");
-  printf("     I: Specified by IP address\n");
-  printf("     N: Specified by Node name\n");
-  printf("   ->");
-  while(1){
-    c = getchar(); getchar();
-    if ( c == 'I' || c == 'i' ||
-	 c == 'N' || c == 'n' )break;
-  }
-  switch(c){
-  case 'I':
-  case 'i':
-    strncpy(port,"NET",nport);
-    while(1){
-      printf("Input IP address of your MFP device:");
-      fgets(ip,nip,stdin);
-      if((p=strchr(ip,'\n')))*p=0;
-      if(check_ipaddress_is_valid(ip))break;
-    }
-    break;
-  case 'N':
-  case 'n':
-    strncpy(port,"NET",nport);
-    while(1){
-      printf("Input NODENAME of your MFP device:");
-      fgets(node,nnode,stdin);
-      if(strlen(node) > 3)break;
-    }
-    break;
-  }
-  get_ids_with_modelname(model,&vid,&pid);
-  sprintf(id,"0x%x:0x%x",vid,pid);
-  free_inifile_tree();
-  return 1;
-}
-#endif

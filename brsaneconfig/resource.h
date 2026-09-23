@@ -31,9 +31,6 @@
 char *HELP[]={
   "USAGE: brsaneconfig%s [-OPTION]",
   "   OPTION:",
-#ifdef SUPPORT_INTERACTIVE
-  "       -a          : Add network scanner (Interactive)",
-#endif //SUPPORT_INTERACTIVE
   "       -a name=FRIENDLY-NAME model=MODEL-NAME ip=xx.xx.xx.xx    ",
   "       -a name=FRIENDLY-NAME model=MODEL-NAME nodename=BRN_xxxxx ",
   "                   : Add network scanner",
