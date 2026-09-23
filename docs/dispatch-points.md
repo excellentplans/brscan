@@ -66,7 +66,6 @@ Further seriesNo locations:
 | `CloseDevice` | 501-502 | `void CloseDevice(usb_dev_handle *hScanner)` |
 | `ReadDeviceData` | 575 | `int ReadDeviceData(usb_dev_handle *hScanner, LPSTR lpRxBuffer, int nReadSize, int seriesNo)` |
 | `ReadNonFixedData` | 708 | `int ReadNonFixedData(usb_dev_handle *hScanner, LPSTR lpBuffer, WORD wReadSize, DWORD dwTimeOutMsec, int seriesNo)` |
-| `ReadDeviceCommand` | 879-880 | `int ReadDeviceCommand(usb_dev_handle*, LPSTR, int, int)` (wrapper around ReadDeviceData) |
 | `WriteDeviceData` | 913-914 | `int WriteDeviceData(usb_dev_handle *hScanner, LPSTR lpTxBuffer, int nWriteSize, int seriesNo)` |
 | `WriteDeviceCommand` | 992-993 | `int WriteDeviceCommand(usb_dev_handle*, LPSTR, int, int)` |
 | `usb_set_configuration_or_reset_toggle` | 1091-1092 | `int usb_set_configuration_or_reset_toggle(Brother_Scanner *this, int configuration)` — this is where the `in_ep` patch was (line 1116). |

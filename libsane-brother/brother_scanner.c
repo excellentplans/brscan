@@ -229,12 +229,10 @@ ScanStart( Brother_Scanner *this )
 	WriteLog( "nPageCnt = %d bEOF = %d  iProcessEnd = %d\n",
 		this->scanState.nPageCnt, this->scanState.bEOF, this->scanState.iProcessEnd);
 
-#if 1
 	// debug for MASU
 	dwFWImageSize = 0;
 	dwFWImageLine = 0;
 	nFwLenTotal = 0;
-#endif
 	this->scanState.nPageCnt++;
 	this->scanState.bReadbufEnd=FALSE;
 	this->scanState.bEOF=FALSE;
@@ -1278,12 +1276,10 @@ PageScan( Brother_Scanner *this, char *lpFwBuf, int nMaxLen, int *lpFwLen )
 				lRealY += nWriteLineCount;
 			}
 
-#if 1	// DEBUG for MASU
 			dwFWImageSize += dwWriteImageSize;
 			dwFWImageLine += nWriteLineCount;
 			WriteLog( "DEBUG for MASU (PageScan) dwFWImageSize  = %d dwFWImageLine = %d", dwFWImageSize, dwFWImageLine );
 			WriteLog( "  PageScan End1 nWriteLineCount = %d", nWriteLineCount );
-#endif
 		}
 		// keep the sitiation  because  the status code is stored to the transmission-keep buffer
 		this->scanState.iProcessEnd = nAnswer;
@@ -1779,11 +1775,7 @@ StartDecodeStretchProc( Brother_Scanner *this )
 
 	ImageProcInfo.nOutDataKind = SCODK_PIXEL_RGB;
 
-#if 1 // modify for the bug that scanning is failed  at Black^White mode
 	ImageProcInfo.bLongBoundary = FALSE;	// never do 4 byte alignment
-#else
-	ImageProcInfo.bLongBoundary = TRUE;
-#endif
 	//
 	// set color type
 	//
@@ -2083,11 +2075,9 @@ ProcessMain(Brother_Scanner *this, WORD wByte, WORD wDataLineCnt, char * lpFwBuf
 
 					if( nWriteLineCount > 0 ){
 						*lpFwBufcnt += dwWriteImageSize;
-#if 1	// DEBUG for MASU
 						dwFWImageSize += dwWriteImageSize;
 						dwFWImageLine += nWriteLineCount;
 						WriteLog( "DEBUG for MASU (ProcessMain) dwFWImageSize  = %d dwFWImageLine = %d", dwFWImageSize, dwFWImageLine );
-#endif
 
 						if( this->mfcModelInfo.bColorModel && ! this->modelConfig.bNoUseColorMatch && this->devScanInfo.wColorType == COLOR_FUL ){
 							int  i;
@@ -2188,11 +2178,7 @@ SetupImgLineProc( BYTE chLineHeader )
 	//
 	// set other parameters
 	//
-#if 1
 	ImgLineProcInfo.bReverWrite     = FALSE;
-#else
-	ImgLineProcInfo.bReverWrite     = TRUE;
-#endif
 	ImgLineProcInfo.dwWriteBuffSize = dwImageBuffSize;
 }
 

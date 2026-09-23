@@ -311,11 +311,6 @@ OpenDevice(usb_dev_handle *hScanner, int seriesNo)
 	  //int scan_socket = -1;
 	  if ((hScanner->net = open_device_net(hScanner->net_device_index,
 					       NULL,ADRTYPE_DEPENDONINI)) == NULL ){
-#if 0   //M-LNX-38  cannot scan with scanimage/scanadf
-	    WriteLog("OpenDevice  ERROR at open_device_net (%x)",
-		     hScanner->net);
-	    return FALSE;
-#else   //M-LNX-38  cannot scan with scanimage/scanadf
 	    WriteLog("OpenDevice  ERROR at open_device_net (%x) retry 1",
 		     hScanner->net);
 	    usleep(300 * 1000); // wait for  300ms
@@ -335,7 +330,6 @@ OpenDevice(usb_dev_handle *hScanner, int seriesNo)
 		usleep(1000*1000);
 	      }
 	    }
-#endif   //M-LNX-38  cannot scan with scanimage/scanadf
 	  }
 	  nEndPoint = 0;    //not be used
 	  goto OPEN_POST_PROC;
@@ -766,129 +760,6 @@ ReadNonFixedData( usb_dev_handle *hScanner, LPSTR lpBuffer, WORD wReadSize, DWOR
 
 //-----------------------------------------------------------------------------
 //
-//	Function name:	ReadFixedData
-//
-//
-//	Abstract:
-//		Read data on a specified size from device
-//
-//
-//	Parameters:
-//		lpBuffer
-//			the pointer to the buffer the read data stored
-//
-//		wReadSize
-//			read data size
-//
-//		dwTimeOut
-//			timeout value (mS)
-//
-//
-//	Return values:
-//		TRUE  = Function end successfully
-//		FALSE = timeout occured (FAILED)
-//
-//
-//	Note:
-//
-//-----------------------------------------------------------------------------
-//	ReadBidiFixedData�ʵ�ReadBidiComm32_q��
-BOOL
-ReadFixedData( usb_dev_handle *hScanner, LPSTR lpBuffer, WORD wReadSize, DWORD dwTimeOutMsec, int seriesNo )
-{
-	BOOL  bResult = TRUE;
-	WORD  wReadCount = 0;
-	int   nReadDataSize;
-
-	struct timeval start_tv, tv;
-	struct timezone tz;
-	long   nSec, nUsec;
-	long   nTimeOutSec, nTimeOutUsec;
-
-	if (gettimeofday(&start_tv, &tz) == -1)
-		return FALSE;
-
-	// calculate the second-order of the timeout value
-	nTimeOutSec = dwTimeOutMsec / 1000;
-	// calculate the micro-second-order of the timeout value
-	nTimeOutUsec = (dwTimeOutMsec - (1000 * nTimeOutSec)) * 1000;
-
-	while( wReadCount < wReadSize ){
-
-		if (gettimeofday(&tv, &tz) == 0) {
-			if (tv.tv_usec < start_tv.tv_usec) {
-				tv.tv_usec += 1000 * 1000 ;
-				tv.tv_sec-- ;
-			}
-			nSec = tv.tv_sec - start_tv.tv_sec;
-			nUsec = tv.tv_usec - start_tv.tv_usec;
-
-			if (nSec > nTimeOutSec) { // break if nSec is larger than timeout value
-				break;
-			}
-			else if( nSec == nTimeOutSec) {      // if the econd-order is same
-				if (nUsec >= nTimeOutUsec) { //     check the micro-sec-order
-					break;
-				}
-			}
-		}
-		else {
-			bResult = FALSE;
-		}
-
-		//
-		// read the data
-		//
-		nReadDataSize = ReadDeviceData( hScanner, &lpBuffer[ wReadCount ], wReadSize - wReadCount, seriesNo );
-		if( nReadDataSize > 0 ){
-			wReadCount += nReadDataSize;
-		}
-
-		if( wReadCount >= wReadSize ) break;	// terminate if reading data is completed
-
-		usleep(20 * 1000); // 20ms�Ԥ�
-	}
-
-	return bResult;
-}
-
-//-----------------------------------------------------------------------------
-//
-//	Function name:	ReadDeviceCommand
-//
-//
-//	Abstract:
-//		read the command from the device
-//
-//
-//	Parameters:
-//		lpRxBuffer
-//			the pointer to the read buffer
-//
-//		nReadSize
-//			the size to read
-//
-//
-//	Return values:
-//		0 >  the function terminates successfully ,the return value is the read data size
-//		0 <= the function is failed : the return value is error code
-//
-//-----------------------------------------------------------------------------
-//
-int
-ReadDeviceCommand( usb_dev_handle *hScanner, LPSTR lpRxBuffer, int nReadSize, int seriesNo )
-{
-	int  nResultSize;
-
-
-	nResultSize = ReadDeviceData( hScanner, lpRxBuffer, nReadSize, seriesNo );
-
-	return nResultSize;
-}
-
-
-//-----------------------------------------------------------------------------
-//
 //	Function name:	WriteDeviceData
 //
 //
@@ -1136,13 +1007,8 @@ int  usb_set_configuration_or_reset_toggle(
 #include <stdio.h>
 #include <string.h>
 
-#if 0
-#define ERRPRINT printf
-#define DBGPRINT printf
-#else
 int ERRPRINT(const char *format,...){return 0;}
 int DBGPRINT(const char *format,...){return 0;}
-#endif
 
 int   sem_id = -1;
 int   semaphore_owner = 0;

@@ -26,7 +26,7 @@
 //
 //
 //	Abstract:
-//			Device¥¢¥¯¥»¥¹½èÍý¥â¥¸¥å¡¼¥ë¡¦¥Ø¥Ã¥À¡¼
+//			Deviceï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½â¥¸ï¿½å¡¼ï¿½ë¡¦ï¿½Ø¥Ã¥ï¿½ï¿½ï¿½
 //
 //
 ///////////////////////////////////////////////////////////////////////////////
@@ -37,21 +37,21 @@
 #include "brother.h"
 
 //
-// Á÷¼õ¿®¥Ð¥Ã¥Õ¥¡¥µ¥¤¥º
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¥Ã¥Õ¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 //
 extern WORD  gwInBuffSize;
 
 //
-// Device¥¢¥¯¥»¥¹»þ¤Î¥¿¥¤¥à¥¢¥¦¥È»þ´Ö
+// Deviceï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¥ï¿½ï¿½ï¿½ï¿½à¥¢ï¿½ï¿½ï¿½È»ï¿½ï¿½ï¿½
 //
-extern UINT  gnQueryTimeout;	// Query·Ï¥³¥Þ¥ó¥É¤Î¥ì¥¹¥Ý¥ó¥¹¼õ¿®»þ¤Î¥¿¥¤¥à¥¢¥¦¥È»þ´Ö
-extern UINT  gnScanTimeout;		// ¥¹¥­¥ã¥ó³«»Ï¡¿¥¹¥­¥ã¥óÃæ¤Î¥¿¥¤¥à¥¢¥¦¥È»þ´Ö
+extern UINT  gnQueryTimeout;	// Queryï¿½Ï¥ï¿½ï¿½Þ¥ï¿½É¤Î¥ì¥¹ï¿½Ý¥ó¥¹¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¥ï¿½ï¿½ï¿½ï¿½à¥¢ï¿½ï¿½ï¿½È»ï¿½ï¿½ï¿½
+extern UINT  gnScanTimeout;		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ó³«»Ï¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¥ï¿½ï¿½ï¿½ï¿½à¥¢ï¿½ï¿½ï¿½È»ï¿½ï¿½ï¿½
 
 //
-// Time out»þ´Ö¤Î¥Ç¥Õ¥©¥ë¥È
+// Time outï¿½ï¿½ï¿½Ö¤Î¥Ç¥Õ¥ï¿½ï¿½ï¿½ï¿½
 //
-#define TIMEOUT_QUERYRES  3000	// Query·Ï¥³¥Þ¥ó¥É¤Î¥ì¥¹¥Ý¥ó¥¹¼õ¿®»þÍÑ¡ÊmsecÃ±°Ì¡Ë
-#define TIMEOUT_SCANNING  60	// ¥¹¥­¥ã¥ó³«»Ï¡¿¥¹¥­¥ã¥óÃæÍÑ¡ÊsecÃ±°Ì¡Ë
+#define TIMEOUT_QUERYRES  3000	// Queryï¿½Ï¥ï¿½ï¿½Þ¥ï¿½É¤Î¥ì¥¹ï¿½Ý¥ó¥¹¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¡ï¿½msecÃ±ï¿½Ì¡ï¿½
+#define TIMEOUT_SCANNING  60	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ó³«»Ï¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¡ï¿½secÃ±ï¿½Ì¡ï¿½
 
 #define NETTIMEOUT        3000
 #define NETTIMEOUTST      {NETTIMEOUT/1000,(NETTIMEOUT%1000)*1000}
@@ -59,7 +59,7 @@ extern UINT  gnScanTimeout;		// ¥¹¥­¥ã¥ó³«»Ï¡¿¥¹¥­¥ã¥óÃæ¤Î¥¿¥¤¥à¥¢¥¦¥È»þ´Ö
 
 #define RETRY_CNT 5
 
-// ¥Ù¥ó¥À¸ÇÍ­¥³¥Þ¥ó¥ÉÄêµÁ
+// ï¿½Ù¥ï¿½ï¿½ï¿½ï¿½Í­ï¿½ï¿½ï¿½Þ¥ï¿½ï¿½ï¿½ï¿½ï¿½
 #define BREQ_TYPE 0xC0
 #define BREQ_GET_OPEN 0x01
 #define BREQ_GET_CLOSE 0x02
@@ -73,15 +73,13 @@ extern UINT  gnScanTimeout;		// ¥¹¥­¥ã¥ó³«»Ï¡¿¥¹¥­¥ã¥óÃæ¤Î¥¿¥¤¥à¥¢¥¦¥È»þ´Ö
 #define BCOMMAND_SCANNER 0x02
 
 //
-// ´Ø¿ô¤Î¥×¥í¥È¥¿¥¤¥×Àë¸À
+// ï¿½Ø¿ï¿½ï¿½Î¥×¥ï¿½ï¿½È¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 //
 void    GetDeviceAccessParam( Brother_Scanner *this );
 int     OpenDevice( usb_dev_handle *hScanner, int seriesNo );
 void    CloseDevice( usb_dev_handle *hScanner );
 int     ReadDeviceData( usb_dev_handle *hScanner, LPSTR lpRxBuffer, int nReadSize, int seriesNo );
 int     ReadNonFixedData( usb_dev_handle *hScanner, LPSTR lpBuffer, WORD wReadSize, DWORD dwTimeOut, int seriesNo );
-BOOL    ReadFixedData( usb_dev_handle *hScanner, LPSTR lpBuffer, WORD wReadSize, DWORD dwTimeOut, int seriesNo );
-int     ReadDeviceCommand( usb_dev_handle *hScanner, LPSTR lpRxBuffer, int nReadSize, int seriesNo );
 int     WriteDeviceData( usb_dev_handle *hScanner, LPSTR lpTxBuffer, int nWriteSize, int seriesNo );
 int     WriteDeviceCommand( usb_dev_handle *hScanner, LPSTR lpTxBuffer, int nWriteSize, int seriesNo );
 HANDLE  AllocReceiveBuffer( DWORD  dwBuffSize );

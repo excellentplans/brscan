@@ -215,17 +215,10 @@ InitOptions (Brother_Scanner *this)
   static char *achDescXY[]= {
 	SANE_DESC_SCAN_TL_X,	SANE_DESC_SCAN_TL_Y,
 	SANE_DESC_SCAN_BR_X,	SANE_DESC_SCAN_BR_Y };
-#if 0  //M-LNX-58
-  static SANE_Word rangXY_DEF[4]= { SANE_FIX(0.0),
-				    SANE_FIX(0.0),
-				    SANE_FIX(210.0),
-				    SANE_FIX(297.0) };
-#else  //M-LNX-58
   static SANE_Word rangXY_DEF[4]= { SANE_FIX(0.0),
 				    SANE_FIX(0.0),
 				    SANE_FIX(215.9),
 				    SANE_FIX(355.6) };
-#endif //M-LNX-58
 
   static const SANE_Range *aRangesXY[] = { &rangeXmm,&rangeYmm,&rangeXmm,&rangeYmm };
 

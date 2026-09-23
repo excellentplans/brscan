@@ -58,19 +58,11 @@ static int NextPoint(char *);
 static int GetSeriesNo(PMODELINF,int *);		/* Get series Number */
 static void GetSupportReso(int,PMODELCONFIG);		/* Get information of supported resolution */
 static void GetSupportScanMode(int,PMODELCONFIG);	/* Get information of supported scan mode */
-#if 0  //M-LNX-20
-static void GetSupportScanSrc(int,PMODELCONFIG);	/* Get information of supported scan source */
-static void GetSupportScanAreaHeight(int,PMODELCONFIG);	/* Get information of supported scan height */
-static void GetSupportScanAreaWidth(int,PMODELCONFIG);	/* Get information of supported scan width */
-static void GetGrayLebelName(int,PMODELCONFIG);		/* Get filename for adjustting gray level */
-static void GetColorMatchName(int,PMODELCONFIG);	/* Get filename for color mutching */
-#else  //M-LNX-20
 static void GetSupportScanSrc(int,PMODELINF,PMODELCONFIG); /* Get information of supported scan source */
 static void GetSupportScanAreaHeight(int,PMODELCONFIG);	/* Get information of supported scan height */
 static void GetSupportScanAreaWidth(int,PMODELCONFIG);	/* Get information of supported scan width */
 static void GetGrayLebelName(int,PMODELINF,PMODELCONFIG); /* Get filename for adjustting gray level */
 static void GetColorMatchName(int,PMODELINF,PMODELCONFIG); /* Get filename for color mutching */
-#endif  //M-LNX-20
 static int GetFaxResoEnable(PMODELCONFIG);	/* Get resolution information for FAX */
 static int GetNoUseColorMatch(PMODELCONFIG);	/* Get flag about color matching isn't used */
 static int GetCompressEnbale(PMODELCONFIG);	/* Get flag about compression is enable	*/
@@ -491,19 +483,11 @@ int get_model_config(PMODELINF modelInf,PMODELCONFIG modelConfig)
 	res = GetSeriesNo(modelInf,&series);			/* get series number		 */
 	GetSupportReso(series,modelConfig);			/* get supported resolution	 */
 	GetSupportScanMode(series,modelConfig);			/* get supported scan mode	 */
-#if 0  //M-LNX-20
-	GetSupportScanSrc(series,modelConfig);			/* get supported scan source	 */
-	GetSupportScanAreaHeight(series,modelConfig);		/* get supported scan length	 */
-	GetSupportScanAreaWidth(series,modelConfig);		/* get supported scan width	 */
-	GetGrayLebelName(series,modelConfig);			/* get filename for adjusting gray level */
-	GetColorMatchName(series,modelConfig);			/* get filename forr color matching */
-#else  //M-LNX-20
 	GetSupportScanSrc(series,modelInf,modelConfig);		/* get supported scan source	 */
 	GetSupportScanAreaHeight(series,modelConfig);		/* get supported scan length	 */
 	GetSupportScanAreaWidth(series,modelConfig);		/* get supported scan width	 */
 	GetGrayLebelName(series,modelInf,modelConfig);		/* get filename for adjusting gray level */
 	GetColorMatchName(series,modelInf,modelConfig);		/* get filename forr color matching */
-#endif  //M-LNX-20
 	res *= GetFaxResoEnable(modelConfig);			/* get flag of resolution for FAX	 */
 	res *= GetNoUseColorMatch(modelConfig);			/* get flag of not use ColorMacth		 */
 	res *= GetCompressEnbale(modelConfig);			/* get flag of compression is enable */
@@ -692,11 +676,6 @@ void GetSupportScanMode(int series,PMODELCONFIG modelConfig)
 ;       2006/02/28      Kazzy   AL_DUPLEX
 ;------------------------------------------------------------------------------
 */
-#if 0   //M-LNX-20
-void GetSupportScanSrc(int series,PMODELCONFIG modelConfig)
-{
-	modelConfig->SupportScanSrc.val = 0x0000;					/* Initialize */
-#else   //M-LNX-20
 void GetSupportScanSrc(int series,PMODELINF modelInf ,PMODELCONFIG modelConfig){
 	modelConfig->SupportScanSrc.val = 0x0000;					/* Initialize */
 	if( (modelInf->expcaps & EXP_CAPDUPLEX) != 0){
@@ -705,7 +684,6 @@ void GetSupportScanSrc(int series,PMODELINF modelInf ,PMODELCONFIG modelConfig){
 	else{
 	  modelConfig->SupportScanSrc.bit.ADF_DUP    = FALSE;		/* Duplex capability FALSE */
 	}
-#endif  //M-LNX-20
 	switch(series)
 	{
 #if BRSANESUFFIX == 2
@@ -790,11 +768,7 @@ void GetSupportScanAreaHeight(int series,PMODELCONFIG modelConfig)
 #endif
 	  //scan area of BH3,ALL and L4CFB are same.
 		default:
-#if 0  //M-LNX-58
-			modelConfig->SupportScanAreaHeight = 297.0;
-#else  //M-LNX-58
 			modelConfig->SupportScanAreaHeight = 355.6;
-#endif //M-LNX-58
 			break;
 	}
 	return;
@@ -834,11 +808,7 @@ void GetSupportScanAreaWidth(int series,PMODELCONFIG modelConfig)
 #else
 	  //scan area of BH3,ALL and L4CFB are same.
 		default:
-#if 0  //M-LNX-58
-			modelConfig->SupportScanAreaWidth = 210.0;
-#else  //M-LNX-58
 			modelConfig->SupportScanAreaWidth = 215.9;
-#endif //M-LNX-58
 			break;
 #endif
 	}
@@ -859,11 +829,6 @@ void GetSupportScanAreaWidth(int series,PMODELCONFIG modelConfig)
 ;       2004/04/18      Kazzy   Only for ALL and BH3
 ;------------------------------------------------------------------------------
 */
-#if 0  //M-LNX-20
-void GetGrayLebelName(int series,PMODELCONFIG modelConfig)
-{
-	char	*name;
-#else  //M-LNX-20
 void GetGrayLebelName(int series,PMODELINF modelInf,PMODELCONFIG modelConfig){
 	char	*name;
 	name = (get_p_model_info_by_index(modelInf->index))->graylevelTBL;
@@ -873,7 +838,6 @@ void GetGrayLebelName(int series,PMODELINF modelInf,PMODELCONFIG modelConfig){
 	    return;
 	  }
 	}
-#endif  //M-LNX-20
 	switch(series)						/* get filename from series number */
 	{
 #if BRSANESUFFIX == 1
@@ -936,11 +900,6 @@ void GetGrayLebelName(int series,PMODELINF modelInf,PMODELCONFIG modelConfig){
 ;       2004/04/18      Kazzy   Only for ALL and BH3
 ;------------------------------------------------------------------------------
 */
-#if 0  //M-LNX-20
-void GetColorMatchName(int series,PMODELCONFIG modelConfig)
-{
-	char	*name;
-#else  //M-LNX-20
 void GetColorMatchName(int series,PMODELINF modelInf,PMODELCONFIG modelConfig){
 	char	*name;
 	name = (get_p_model_info_by_index(modelInf->index))->colmatchTBL;
@@ -950,7 +909,6 @@ void GetColorMatchName(int series,PMODELINF modelInf,PMODELCONFIG modelConfig){
 	    return;
 	  }
 	}
-#endif  //M-LNX-20
 
 	/* get filename from series number */
 	switch(series)
