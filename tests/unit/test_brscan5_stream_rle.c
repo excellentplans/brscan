@@ -1,4 +1,5 @@
 /*
+ * Copyright 2025 excellentplans. SPDX-License-Identifier: GPL-2.0-or-later
  * test_brscan5_stream_rle.c — T8c unit tests for the RLENGTH (B/W)
  * parser path:
  *

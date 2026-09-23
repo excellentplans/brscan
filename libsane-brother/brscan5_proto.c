@@ -1,4 +1,5 @@
 /*
+ * Copyright 2025 excellentplans. SPDX-License-Identifier: GPL-2.0-or-later
  * brscan5_proto.c — pure brscan5 protocol module (Brother DS-640).
  *
  * Command encoders and response readers, split out of

@@ -1,4 +1,5 @@
 /*
+ * Copyright 2025 excellentplans. SPDX-License-Identifier: GPL-2.0-or-later
  * brother_brscan5.h — brscan5 command layer for the Brother DS-640.
  *
  * The DS-640 (04f9:0468) speaks the brscan5 text-command protocol on

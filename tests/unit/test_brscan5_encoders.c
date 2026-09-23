@@ -1,4 +1,5 @@
 /*
+ * Copyright 2025 excellentplans. SPDX-License-Identifier: GPL-2.0-or-later
  * test_brscan5_encoders.c — byte-exact encoder/reader tests for the
  * brscan5 command layer (Brother DS-640).
  *

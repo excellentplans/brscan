@@ -1,4 +1,5 @@
 /*
+ * Copyright 2025 excellentplans. SPDX-License-Identifier: GPL-2.0-or-later
  * test_brscan5_stream_records.c — T8e unit tests for status records that
  * ride INSIDE a data chunk instead of arriving as their own read().
  *

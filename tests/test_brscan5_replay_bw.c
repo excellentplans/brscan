@@ -1,4 +1,5 @@
 /*
+ * Copyright 2025 excellentplans. SPDX-License-Identifier: GPL-2.0-or-later
  * test_brscan5_replay_bw.c — T8d end-to-end replay test for the B/W
  * (COMP=RLENGTH) data path: loads the built backend .so, selects mode
  * "Black & White" and runs the full SANE lifecycle against the BW-300

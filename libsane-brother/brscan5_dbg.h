@@ -3,7 +3,9 @@
 
 #include <stdarg.h>
 
-/* brscan5-layer logging: every log line goes through DBG(level, ...) on
+   Copyright 2025 excellentplans. SPDX-License-Identifier: GPL-2.0-or-later
+/* Copyright 2025 excellentplans. SPDX-License-Identifier: GPL-2.0-or-later
+ * brscan5-layer logging: every log line goes through DBG(level, ...) on
  * the SANE debug channel (SANE_DEBUG_BROTHER, "[brother] " stderr
  * prefix). The brscan5 TUs must not include <sane/sanei_debug.h>
  * directly: with NDEBUG (Release builds) it compiles DBG down to a

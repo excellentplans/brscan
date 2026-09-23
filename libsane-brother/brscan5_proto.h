@@ -2,6 +2,7 @@
 #define BRSCAN5_PROTO_H
 
 /*
+ * Copyright 2025 excellentplans. SPDX-License-Identifier: GPL-2.0-or-later
  * brscan5_proto.h — pure brscan5 protocol module (Brother DS-640).
  *
  * Command encoders and response readers for the brscan5 text-command

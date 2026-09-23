@@ -1,4 +1,5 @@
 /*
+ * Copyright 2025 excellentplans. SPDX-License-Identifier: GPL-2.0-or-later
  * test_brscan5_replay_raw.c — end-to-end brscan5 replay test (T6).
  *
  * Loads the backend .so directly (dlopen), runs the full SANE lifecycle

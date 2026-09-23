@@ -1,4 +1,5 @@
 /*
+ * Copyright 2025 excellentplans. SPDX-License-Identifier: GPL-2.0-or-later
  * brother_brscan5_replay.c — replay transport for the brscan5 command layer.
  *
  * Implements the brscan5_transport interface against a fixture file instead

@@ -1,3 +1,4 @@
+# Copyright 2025 excellentplans. SPDX-License-Identifier: GPL-2.0-or-later
 # run_replay_test.cmake — run a brscan5 replay e2e test and verify the
 # output md5 and size against the reference fixture.
 #

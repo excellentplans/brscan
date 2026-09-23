@@ -1,4 +1,5 @@
 /*
+ * Copyright 2025 excellentplans. SPDX-License-Identifier: GPL-2.0-or-later
  * test_brscan5_geo.c — scan-geometry conversion policies
  * (brscan5_mm0d1_to_px / brscan5_mm_to_px_area / brscan5_fill_params).
  *

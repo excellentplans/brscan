@@ -1,3 +1,4 @@
+<!-- Copyright 2025 excellentplans. SPDX-License-Identifier: GPL-2.0-or-later -->
 # brscan — Dispatch points for the DS-640 (brscan5) port
 
 Status: build baseline of 2026-09-20, commit `f30e923` (endpoint patch

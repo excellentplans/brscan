@@ -1,4 +1,5 @@
 /*
+ * Copyright 2025 excellentplans. SPDX-License-Identifier: GPL-2.0-or-later
  * brscan5_stream.c — incremental byte-oriented parser for the Brother DS-640
  * scan-data stream (USB EP 0x83 IN).
  *

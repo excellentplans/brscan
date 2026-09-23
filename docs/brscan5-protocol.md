@@ -1,3 +1,4 @@
+<!-- Copyright 2025 excellentplans. SPDX-License-Identifier: GPL-2.0-or-later -->
 # Brother DS-640 — brscan5 USB Protocol Specification
 
 Status: 2026-09-21 · Source: usbmon captures of the working amd64 driver

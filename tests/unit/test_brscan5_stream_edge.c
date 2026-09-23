@@ -1,4 +1,5 @@
 /*
+ * Copyright 2025 excellentplans. SPDX-License-Identifier: GPL-2.0-or-later
  * test_brscan5_stream_edge.c — synthetic edge-case tests for the brscan5
  * stream parser, ported from the standalone parser suite (frozen in
  * attic/brscan5-parser; the canonical parser source lives in

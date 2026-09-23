@@ -1,4 +1,5 @@
 /*
+ * Copyright 2025 excellentplans. SPDX-License-Identifier: GPL-2.0-or-later
  * test_brscan5_faults.c — T7 fault-injection e2e tests for the brscan5
  * command layer (cancel mid-page, transport error, simulated timeout,
  * empty feeder).

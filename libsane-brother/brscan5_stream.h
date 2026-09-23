@@ -2,6 +2,7 @@
 #define BRSCAN5_STREAM_H
 
 /*
+ * Copyright 2025 excellentplans. SPDX-License-Identifier: GPL-2.0-or-later
  * brscan5_stream.h — incremental, byte-oriented stream parser for the
  * Brother DS-640 scan-data phase (USB EP 0x83 IN).
  *
