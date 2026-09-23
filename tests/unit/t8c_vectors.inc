@@ -1,6 +1,6 @@
-/* ------------------------------------------------------------------ */
- * Copyright 2025 excellentplans. SPDX-License-Identifier: GPL-2.0-or-later
-/* T8c: byte-exact SSP/XSC vectors from the NATIVE T8c captures with
+/* Copyright 2025 excellentplans. SPDX-License-Identifier: GPL-2.0-or-later
+ *
+ * T8c: byte-exact SSP/XSC vectors from the NATIVE T8c captures with
  * paper (content document). First complete SSP/XSC pair of each
  * t8c-p3-native-*_doc.bin capture (raw usbmon search; the captures
  * contain interleaved event copies of parallel reader sessions, see
