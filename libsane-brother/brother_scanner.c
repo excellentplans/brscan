@@ -796,7 +796,6 @@ PageScanColor( Brother_Scanner *this, char *lpFwBuf, int nMaxLen, int *lpFwLen )
  *									      *
  ******************************************************************************/
 
-#if BRSANESUFFIX == 2
 static int brscan4_device_read(void *ctx, unsigned char *dst, int size)
 {
 	Brother_Scanner *this = (Brother_Scanner *)ctx;
@@ -919,10 +918,6 @@ PageScan( Brother_Scanner *this, char *lpFwBuf, int nMaxLen, int *lpFwLen )
 	LPBYTE  lpReadBuf;
 	int	nMinReadSize; // minimum read size
 
-	//05/07/31 For select scan are
-	int     nHeadOnly;
-	WORD    nLength;
-
 #ifdef NO39_DEBUG
 	struct timeval start_tv, tv;
 	struct timezone tz;
@@ -970,7 +965,9 @@ PageScan( Brother_Scanner *this, char *lpFwBuf, int nMaxLen, int *lpFwLen )
 	WriteLog( "devScanInfo.ScanAreaSize.lHeight = [%d]", this->devScanInfo.ScanAreaSize.lHeight );
 	WriteLog( "devScanInfo.ScanAreaByte.lWidth = [%d]", this->devScanInfo.ScanAreaByte.lWidth );
 	WriteLog( "devScanInfo.ScanAreaByte.lHeight = [%d]", this->devScanInfo.ScanAreaByte.lHeight );
+#if BRSANESUFFIX == 2
 	WriteLog( "ReadbufEnd is %d",this->scanState.bReadbufEnd); //050428
+#endif
 
 
 	memset(lpFwBuf, 0x00, nMaxLen);	//  clear the transmission buffer to zero
@@ -1010,6 +1007,7 @@ PageScan( Brother_Scanner *this, char *lpFwBuf, int nMaxLen, int *lpFwLen )
 			else
 #endif
 				rc = ReadNonFixedData( this->hScanner, lpReadBuf, nReadSize, READ_TIMEOUT, this->modelInf.seriesNo );
+#if BRSANESUFFIX == 2
 			if (rc <= 0) {
 				/* rc < 0 = USB error, rc == 0 = timed out with no data
 				 * for READ_TIMEOUT (20 s). Both mean "scanner has gone
@@ -1023,7 +1021,15 @@ PageScan( Brother_Scanner *this, char *lpFwBuf, int nMaxLen, int *lpFwLen )
 				WriteLog( "  bReadbufEnd =TRUE (rc=%d from ReadNonFixedData)", rc );
 				break;
 			}
+#else
+			if (rc < 0) {
+				this->scanState.bReadbufEnd = TRUE;
+				WriteLog( "  bReadbufEnd =TRUE" );
+				break;
+			}
+#endif
 			else if (rc > 0){
+#if BRSANESUFFIX == 2
 				//06/02/28
 				int sc;
 				wData += rc;
@@ -1051,6 +1057,13 @@ PageScan( Brother_Scanner *this, char *lpFwBuf, int nMaxLen, int *lpFwLen )
 				else if(sc == 2){
 				  break;
 				}
+#else
+				if (StatusChk(lpRxBuff, wData)) {
+					this->scanState.bReadbufEnd = TRUE;
+					WriteLog( "bReadbufEnd =TRUE" );
+					break;
+				}
+#endif
 			}
 		 }
 	}
@@ -1077,10 +1090,6 @@ PageScan( Brother_Scanner *this, char *lpFwBuf, int nMaxLen, int *lpFwLen )
 	nResoLine= this->scanInfo.UserSelect.wResoY / this->devScanInfo.DeviceScan.wResoY;
 	if (nResoLine > 1)
 		nFwTempBuffMaxLine /= nResoLine;
-
-	//05/07/31
-	nHeadOnly=0;
-	nLength=0;
 
 	dwRxTempBuffLength = wData;
 
@@ -1110,7 +1119,6 @@ PageScan( Brother_Scanner *this, char *lpFwBuf, int nMaxLen, int *lpFwLen )
 			DWORD lineTotal = length_pos + 2 + (DWORD)data_len;
 			if (lineTotal < 5 || dwRxTempBuffLength < lineTotal) break;
 
-			nLength = lineTotal;
 			dwRxTempBuffLength -= lineTotal;
 			pt += lineTotal;
 			wDataLineCnt++;
@@ -1135,7 +1143,6 @@ PageScan( Brother_Scanner *this, char *lpFwBuf, int nMaxLen, int *lpFwLen )
 				dwRxTempBuffLength -= 1;
 				pt += 1;
 				wDataLineCnt++;
-				nHeadOnly++;    //05/07/31
 			}
 			else {
 				// Image data
@@ -1144,16 +1151,35 @@ PageScan( Brother_Scanner *this, char *lpFwBuf, int nMaxLen, int *lpFwLen )
 				if( dwRxTempBuffLength < 3 )
 					length = 0;		// clear
 				else{
+#if BRSANESUFFIX == 2
 					length = *(WORD *)( pt + 1 );
-					nLength = length+3;
+#else
+					length = ((unsigned char)pt[1] << 8) | (unsigned char)pt[2]; // big-endian for brscan4 models
+#endif
 				}
+#if BRSANESUFFIX == 2
 				if (wDataLineCnt < 5) {
 					WriteLog("  LP2[%d] h=0x%02x len=%u rem=%lu max=%d",
 						wDataLineCnt, headch, (unsigned)length,
 						(unsigned long)dwRxTempBuffLength, nFwTempBuffMaxLine);
 				}
+#else
+				if (wDataLineCnt < 3) {
+					WriteLog("  LineParser[%d]: head=0x%02x len=%u remain=%lu pt=%02x %02x %02x %02x %02x %02x",
+						wDataLineCnt, headch, length, (unsigned long)dwRxTempBuffLength,
+						(unsigned char)pt[0], (unsigned char)pt[1], (unsigned char)pt[2],
+						(unsigned char)pt[3], (unsigned char)pt[4], (unsigned char)pt[5]);
+				}
+#endif
 				if( dwRxTempBuffLength < (DWORD)( length + 3) ){	// length+3 = head(1B)+length(2B)+data(length)
+#if BRSANESUFFIX == 2
 					if (wDataLineCnt < 3) WriteLog("  LP2 BREAK: need %u have %lu", (unsigned)(length+3), (unsigned long)dwRxTempBuffLength);
+#else
+					if (wDataLineCnt == 0) {
+						WriteLog("  LineParser BREAK: need %u have %lu",
+							(unsigned)(length+3), (unsigned long)dwRxTempBuffLength);
+					}
+#endif
 					break;
 				}
 				else{
@@ -1203,6 +1229,7 @@ PageScan( Brother_Scanner *this, char *lpFwBuf, int nMaxLen, int *lpFwLen )
 		memmove( lpRxTempBuff, lpRxBuff+wProcessSize, dwRxTempBuffLength );	// Keep the rest data
 	}
 
+#if BRSANESUFFIX == 2
 	/* Fallback EOF / error detection. Scenarios handled here:
 	 *
 	 *   (a) Scanner delivered all expected lines but the 0x80 Page-End
@@ -1236,6 +1263,7 @@ PageScan( Brother_Scanner *this, char *lpFwBuf, int nMaxLen, int *lpFwLen )
 		WriteLog("  brscan4: scanner sent no data, reporting SCAN_SERVICE_ERR");
 		nAnswer = SCAN_SERVICE_ERR;
 	}
+#endif
 
 	if ( nAnswer == SCAN_EOF || nAnswer == SCAN_MPS )  {
 		// The case of last page
@@ -1384,6 +1412,7 @@ PageScan( Brother_Scanner *this, char *lpFwBuf, int nMaxLen, int *lpFwLen )
 			break;
 	}
 
+#if BRSANESUFFIX == 2
 	//2006/03/03 for sane_read
 	if(nAnswer == SCAN_DUPLEX_NORMAL && *lpFwLen == 0){
 	  *lpFwLen = 1;
@@ -1392,405 +1421,14 @@ PageScan( Brother_Scanner *this, char *lpFwBuf, int nMaxLen, int *lpFwLen )
 
 	if(nAnswer != SCAN_DUPLEX_NORMAL)
 	  nFwLenTotal += *lpFwLen;
-
-	WriteLog( "<<<<< PageScan End <<<<< nFwLenTotal = %d lpFwLen = %d ",nFwLenTotal, *lpFwLen);
-
-	return rc;
-}
-#elif  BRSANESUFFIX == 1
-
-/********************************************************************************
- *										*
- *	FUNCTION	PageScan						*
- *										*
- *	PURPOSE		���ڡ���ʬ�򥹥���󤹤롣					*
- *										*
- *	����		Brother_Scanner *this	�� Brother_Scanner��¤��		*
- *			char *lpFwBuf		�� �����Хåե�			*
- *			int nMaxLen		�� �����Хåե�Ĺ			*
- *			int *lpFwLen		�� �����ǡ���Ĺ			*
- *										*
- *										*
- *										*
- ********************************************************************************/
-int
-PageScan( Brother_Scanner *this, char *lpFwBuf, int nMaxLen, int *lpFwLen )
-{
-	WORD	wData=0;	// �����ǡ����������ʥХ��ȿ���
-	WORD	wDataLineCnt=0;	// �����ǡ����Υ饤���
-	int	nAnswer=0;
-	int	rc;
-	LPSTR   lpRxTop;
-	WORD	wProcessSize;
-
-	int	nReadSize;
-	LPSTR   lpReadBuf;
-	int	nMinReadSize; // �Ǿ��꡼�ɥ�����
-
-#ifdef NO39_DEBUG
-	struct timeval start_tv, tv;
-	struct timezone tz;
-	long   nSec, nUsec;
-#endif
-	if (!this->scanState.bScanning) {
-		rc = SANE_STATUS_IO_ERROR;
-		return rc;
-	}
-	if (this->scanState.bCanceled) { //����󥻥����
-		WriteLog( "Page Canceled" );
-
-		rc = SANE_STATUS_CANCELLED;
-		this->scanState.bScanning=FALSE;
-		this->scanState.bCanceled=FALSE;
-		this->scanState.nPageCnt = 0;
-
-		return rc;
-	}
-
-	nPageScanCnt++;
-	WriteLog( ">>> PageScan Start <<< cnt=%d nMaxLen=%d\n", nPageScanCnt, nMaxLen);
-
-#ifdef NO39_DEBUG
-	if (gettimeofday(&tv, &tz) == 0) {
-
-	    if (tv.tv_usec < save_tv.tv_usec) {
-			tv.tv_usec += 1000 * 1000 ;
-			tv.tv_sec-- ;
-		}
-		nUsec = tv.tv_usec - save_tv.tv_usec;
-		nSec = tv.tv_sec - save_tv.tv_sec;
-
-		WriteLog( " No39 nSec = %d Usec = %d\n", nSec, nUsec ) ;
-	}
-#endif
-
-
-	WriteLog( "scanInfo.ScanAreaSize.lWidth = [%d]", this->scanInfo.ScanAreaSize.lWidth );
-	WriteLog( "scanInfo.ScanAreaSize.lHeight = [%d]", this->scanInfo.ScanAreaSize.lHeight );
-	WriteLog( "scanInfo.ScanAreaByte.lWidth = [%d]", this->scanInfo.ScanAreaByte.lWidth );
-	WriteLog( "scanInfo.ScanAreaByte.lHeight = [%d]", this->scanInfo.ScanAreaByte.lHeight );
-
-	WriteLog( "devScanInfo.ScanAreaSize.lWidth = [%d]", this->devScanInfo.ScanAreaSize.lWidth );
-	WriteLog( "devScanInfo.ScanAreaSize.lHeight = [%d]", this->devScanInfo.ScanAreaSize.lHeight );
-	WriteLog( "devScanInfo.ScanAreaByte.lWidth = [%d]", this->devScanInfo.ScanAreaByte.lWidth );
-	WriteLog( "devScanInfo.ScanAreaByte.lHeight = [%d]", this->devScanInfo.ScanAreaByte.lHeight );
-
-
-	memset(lpFwBuf, 0x00, nMaxLen);	//  �����Хåե��򥼥����ꥢ���Ƥ�����
-	*lpFwLen = 0;
-
-	if ( (!this->scanState.iProcessEnd) && ( FwTempBuffLength < nMaxLen) ) { 
-	// ���ơ����������ɤ�������Ƥ��ʤ����Ǥ��������Хåե����������������¸�Хåե��Υǡ���Ĺ�����������
-
-	// ��¸�ǡ����Хåե��˥ǡ�����¸�ߤ�����ϡ������ǡ����Хåե��˥��ԡ����롣
-	memmove( lpRxBuff, lpRxTempBuff, dwRxTempBuffLength );	// ��Ƭ������ǡ�������
-	wData += dwRxTempBuffLength;	// ��Ǽ�ǡ���length������
-
-	lpRxTop = lpRxBuff;
-
-	// ������¸�Хåե��˺���3�饤��ʬ��Ÿ���Ǥ���褦�˥�����ʤ���ǡ����ɤ߹��ࡣ
-	if (this->devScanInfo.wColorType == COLOR_FUL || this->devScanInfo.wColorType == COLOR_FUL_NOCM )
-		nMinReadSize = (this->devScanInfo.ScanAreaByte.lWidth + 3) * 3;
-	else
-		nMinReadSize = (this->devScanInfo.ScanAreaByte.lWidth + 3);
-
-	nMinReadSize *= 3; // ����3�饤��ʬ�ϥ꡼�ɤ��롣
-	if ( !this->scanState.bReadbufEnd ) {
-		for (rc=0 ; wData < nMinReadSize;)
-		{
-			nReadSize = dwRxBuffMaxSize - (dwRxTempBuffLength + wData);
-			lpReadBuf = lpRxTop+wData;
-
-			nReadCnt++;
-			WriteLog( "Read request size is %d, (dwRxTempBuffLength = %d)", gwInBuffSize - dwRxTempBuffLength, dwRxTempBuffLength );
-			WriteLog( "PageScan ReadNonFixedData Cnt = %d", nReadCnt );
-
-			rc = ReadNonFixedData( this->hScanner, lpReadBuf, nReadSize, READ_TIMEOUT , this->modelInf.seriesNo );
-			if (rc < 0) {
-				this->scanState.bReadbufEnd = TRUE;
-				WriteLog( "  bReadbufEnd =TRUE" );
-				break;
-			}
-			else if (rc > 0){
-				wData += rc;
-
-				if (StatusChk(lpRxBuff, wData)) { // ���ơ����������ɤ���������������å����롣
-					this->scanState.bReadbufEnd = TRUE;
-					WriteLog( "bReadbufEnd =TRUE" );
-					break;
-				}
-			}
-		}
-	}
-
-	WriteLog( "Read data size is %d, (dwRxTempBuffLength = %d)", wData, dwRxTempBuffLength );
-
-	WriteLog( "Adjusted wData = %d, (dwRxTempBuffLength = %d)", wData, dwRxTempBuffLength );
-
-	if (wData != 0)
-	// �ǡ�����饤��ñ�̤ޤǤ˶��ڤ�
-	{
-	LPSTR  pt = lpRxBuff;
-	int nFwTempBuffMaxLine;
-	int nResoLine;
-
-	// �������륤�᡼���ǡ�������(�ɥå�)
-	if (this->devScanInfo.wColorType == COLOR_FUL || this->devScanInfo.wColorType == COLOR_FUL_NOCM ) {
-		nFwTempBuffMaxLine = (dwFwTempBuffMaxSize / 2 - FwTempBuffLength) / this->scanInfo.ScanAreaByte.lWidth;
-		nFwTempBuffMaxLine *= 3;
-	}
-	else {
-		nFwTempBuffMaxLine = (dwFwTempBuffMaxSize / 2 - FwTempBuffLength) / this->scanInfo.ScanAreaByte.lWidth;
-	}
-	nResoLine= this->scanInfo.UserSelect.wResoY / this->devScanInfo.DeviceScan.wResoY;
-	if (nResoLine > 1)
-		nFwTempBuffMaxLine /= nResoLine;
-
-	dwRxTempBuffLength = wData;
-	for (wDataLineCnt=0; wDataLineCnt < nFwTempBuffMaxLine;){
-		BYTE headch;
-
-		if( dwRxTempBuffLength <= 0 )	break;	// ���ƤΥǡ����Ͻ�����ǽ(���ڤ��ɤ��������줿)
-
-		headch = (BYTE)*pt;
-		if ((signed char)headch < 0) {
-			// STATUS,CTRL�ϥ�����
-			dwRxTempBuffLength --;			// CTRL�ϥ����ɤ�1byte����
-			pt++;					// ����header����򻲾�
-
-			wDataLineCnt+=3;
-		}else{
-			if (headch == 0) {
-				dwRxTempBuffLength -= 1;
-				pt += 1;
-				wDataLineCnt++;
-			}
-			else {
-				// �����ǡ���
-				WORD length;
-
-				if( dwRxTempBuffLength < 3 )
-					length = 0;		// �����
-				else
-					// �饹���ǡ���Ĺ�μ���
-					length = ((unsigned char)pt[1] << 8) | (unsigned char)pt[2]; // big-endian for brscan4 models
-
-				if (wDataLineCnt < 3) {
-					WriteLog("  LineParser[%d]: head=0x%02x len=%u remain=%lu pt=%02x %02x %02x %02x %02x %02x",
-						wDataLineCnt, headch, length, (unsigned long)dwRxTempBuffLength,
-						(unsigned char)pt[0], (unsigned char)pt[1], (unsigned char)pt[2],
-						(unsigned char)pt[3], (unsigned char)pt[4], (unsigned char)pt[5]);
-				}
-
-				if( dwRxTempBuffLength < (DWORD)( length + 3) ){	// length+3 = head(1B)+length(2B)+data(length)
-					if (wDataLineCnt == 0) {
-						WriteLog("  LineParser BREAK: need %u have %lu",
-							(unsigned)(length+3), (unsigned long)dwRxTempBuffLength);
-					}
-					break;
-				}
-				else{
-					// 1lineʬ�Υǡ�������
-					dwRxTempBuffLength -= length + 3;	// �����ǡ����� length+3 byte����
-					pt += length + 3;			// ����header����򻲾�
-					wDataLineCnt++;
-				}
-			}
-		}
-	} // end of for(;;)
-	wData -= dwRxTempBuffLength;	// Ÿ�������˲󤹥ǡ������飱�饤��̤���Υǡ��������
-
-	// �饹���ǡ�����Ÿ������
-#ifdef NO39_DEBUG
-	if (gettimeofday(&start_tv, &tz) == -1)
-		return FALSE;
-#endif
-
-#if BRSANESUFFIX == 2
-	if (this->modelInf.seriesNo >= MUST_CONVERT_MODEL &&
-	    (this->devScanInfo.wColorType == COLOR_FUL ||
-	     this->devScanInfo.wColorType == COLOR_FUL_NOCM))
-		nAnswer = brscan4_process_color_direct(this, wData, &wProcessSize);
-	else
-#endif
-		nAnswer = ProcessMain( this, wData, wDataLineCnt, lpFwTempBuff+FwTempBuffLength, &FwTempBuffLength, &wProcessSize );
-
-#ifdef NO39_DEBUG
-	if (gettimeofday(&tv, &tz) == 0) {
-		if (tv.tv_usec < start_tv.tv_usec) {
-			tv.tv_usec += 1000 * 1000 ;
-			tv.tv_sec-- ;
-		}
-		nSec = tv.tv_sec - start_tv.tv_sec;
-		nUsec = tv.tv_usec - start_tv.tv_usec;
-
-		WriteLog( " PageScan ProcessMain Time %d sec %d Us", nSec, nUsec );
-
-	}
-
-#endif
-
-
-	if ((dwRxTempBuffLength > 0) || (wProcessSize < wData)) {
-		dwRxTempBuffLength += (wData - wProcessSize);
-		memmove( lpRxTempBuff, lpRxBuff+wProcessSize, dwRxTempBuffLength );	// �Ĥ�ǡ�������¸
-	}
-
-	if ( nAnswer == SCAN_EOF || nAnswer == SCAN_MPS )  {
-		// �Ǹ�Υڡ����ǡ����ξ��
-		if( lRealY > 0 ){
-
-			ImgLineProcInfo.pWriteBuff = lpFwTempBuff+FwTempBuffLength;
-			ImgLineProcInfo.dwWriteBuffSize = dwImageBuffSize;
-
-			dwWriteImageSize = this->scanDec.lpfnScanDecPageEnd( &ImgLineProcInfo, &nWriteLineCount );
-			if( nWriteLineCount > 0 ){
-				FwTempBuffLength += dwWriteImageSize;
-				lRealY += nWriteLineCount;
-			}
-
-#if 1	// DEBUG for MASU
-			dwFWImageSize += dwWriteImageSize;
-			dwFWImageLine += nWriteLineCount;
-			WriteLog( "DEBUG for MASU (PageScan) dwFWImageSize  = %d dwFWImageLine = %d", dwFWImageSize, dwFWImageLine );
-			WriteLog( "  PageScan End1 nWriteLineCount = %d", nWriteLineCount );
-#endif
-		}
-		// ���ơ����������ɤ�������¸�Хåե������ä����ᡢ���֤�Ф��Ƥ���
-		this->scanState.iProcessEnd = nAnswer;
-		WriteLog( " PageScan scanState.iProcessEnd = %d, ", this->scanState.iProcessEnd );
-	}
-
-	}
-	else { // wData == 0
-		if (FwTempBuffLength == 0 && dwRxTempBuffLength == 0) {
-			nAnswer = SCAN_EOF;
-			WriteLog( "<<<<< PageScan [Read Error End]  <<<<<" );
-		}
-	}
-	WriteLog( "ProcessMain End dwRxTempBuffLength = %d", dwRxTempBuffLength );
-
-	} // if ( (!this->scanState.iProcessEnd) || ( FwTempBuffLength > nMaxLen) ) 
-
-	if (this->scanState.iProcessEnd) { // ������¸�Хåե��˥��ơ����������ɤ�������Ƥ�����
-		WriteLog( "<<<<< PageScan Status Code Read!!!" );
-		nAnswer = this->scanState.iProcessEnd;
-	}
-
-	/* �����Хåե���������¸�Хåե��ˤ��륤�᡼���ǡ����򥳥ԡ����롣*/
-	WriteLog( "<<<<< PageScan FwTempBuffLength = %d", FwTempBuffLength );
-
-	if ( FwTempBuffLength > nMaxLen )
-		*lpFwLen = nMaxLen;
-	else
-		*lpFwLen = FwTempBuffLength;
-
-	FwTempBuffLength -= *lpFwLen ;
-
-	memmove( lpFwBuf, lpFwTempBuff, *lpFwLen);	// ������¸�Хåե����������Хåե��إ��ԡ����롣
-	memmove( lpFwTempBuff, lpFwTempBuff+*lpFwLen, FwTempBuffLength ); // �Ĥ����¸�ǡ�������Ƭ�˰�ư���롣	
-
-	rc = SANE_STATUS_GOOD;
-
-#ifdef NO39_DEBUG
-	gettimeofday(&save_tv, &save_tz);
-#endif
-	if ( nAnswer == SCAN_EOF || nAnswer == SCAN_MPS )  {
-
-		if (FwTempBuffLength != 0 ) {
-			return rc;
-		}
-		else {
-			// ���ꤷ���ǡ���Ĺ�����������ǡ���Ĺ�����ʤ���硢�Ĥ�Υǡ���Ĺ�����Ȥ��ƥ��åȤ��롣		
-			if( lRealY < this->scanInfo.ScanAreaSize.lHeight ){
-				// ���ꤷ��Ĺ����꾯�ʤ��ͤξ��֤ǡ��ڡ�������ɥ��ơ������Ȥʤä����
-				int nHeightLen = this->scanInfo.ScanAreaSize.lHeight - lRealY;
-				int nSize = this->scanInfo.ScanAreaByte.lWidth * nHeightLen; 
-				int nMaxSize = nMaxLen - *lpFwLen;
-				int nMaxLine;
-				int nVal;
-
-				if (this->devScanInfo.wColorType < COLOR_TG)
-					nVal = 0x00;
-				else
-					nVal = 0xFF;
-
-				if ( nSize < nMaxSize ) {
-					memset(lpFwBuf+*lpFwLen, nVal, nSize);
-					*lpFwLen += nSize;
-					lRealY += nHeightLen;
-					WriteLog( "PageScan AddSpace End lRealY = %d, nHeightLen = %d nSize = %d nMaxSize = %d *lpFwLen = %d",
-					lRealY, nHeightLen, nSize, nMaxSize, *lpFwLen );
-				}
-				else {
-					memset(lpFwBuf+*lpFwLen, nVal, nMaxSize);
-					nMaxLine = nMaxSize / this->scanInfo.ScanAreaByte.lWidth;
-					*lpFwLen += this->scanInfo.ScanAreaByte.lWidth * nMaxLine;
-					lRealY += nMaxLine;
-					WriteLog( "PageScan AddSpace lRealY = %d, nHeightLen = %d nSize = %d nMaxSize = %d *lpFwLen = %d",
-					lRealY, nHeightLen, nSize, nMaxSize, *lpFwLen );
-				}
-			}
-		}
-	}
-
-	switch( nAnswer ){
-		case SCAN_CANCEL:
-			WriteLog( "Page Canceled" );
-
-			this->scanState.nPageCnt = 0;
-			rc = SANE_STATUS_CANCELLED;
-			this->scanState.bScanning=FALSE;
-			this->scanState.bCanceled=FALSE;
-			break;
-
-		case SCAN_EOF:
-			WriteLog( "Page End" );
-			WriteLog( "  nAnswer = %d lRealY = %d", nAnswer, lRealY );
-
-			if( lRealY != 0 ) {
-				// ������¸�Хåե��˥ǡ���������֤ϡ�SANE_STATUS_GOOD���֤���
-				if (*lpFwLen == 0) {
-					this->scanState.bEOF=TRUE;
-					this->scanState.bScanning=FALSE;
-					rc = SANE_STATUS_EOF;
-				}
-			}
-			else {
-				// �ǡ�������̵����EOF�ξ�硢���顼�Ȥ��롣
-				rc = SANE_STATUS_IO_ERROR;
-			}
-			break;
-		case SCAN_MPS:
-			// ������¸�Хåե��˥ǡ���������֤ϡ�SANE_STATUS_GOOD���֤���
-			if (*lpFwLen == 0) {
-				this->scanState.bEOF=TRUE;
-				rc = SANE_STATUS_EOF;
-			}
-			break;
-		case SCAN_NODOC:
-			rc = SANE_STATUS_NO_DOCS;
-			break;
-		case SCAN_DOCJAM:
-			rc = SANE_STATUS_JAMMED;
-			break;
-		case SCAN_COVER_OPEN:
-			rc = SANE_STATUS_COVER_OPEN;
-			break;
-		case SCAN_SERVICE_ERR:
-			rc = SANE_STATUS_IO_ERROR;
-			break;
-	}
-
+#else
 	nFwLenTotal += *lpFwLen;
+#endif
+
 	WriteLog( "<<<<< PageScan End <<<<< nFwLenTotal = %d lpFwLen = %d ",nFwLenTotal, *lpFwLen);
 
 	return rc;
 }
-
-#else    //BRSANESUFFIX
-  force causing compile error
-#endif   //BRSANESUFFIX
 
 
 
