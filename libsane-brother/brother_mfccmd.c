@@ -26,12 +26,13 @@
 //
 //
 //	Abstract:
-//			MFC¥¹¥­¥ã¥Ê¡¦¥³¥Þ¥ó¥É½èÍý¥â¥¸¥å¡¼¥ë
+//			MFCï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¡ï¿½ï¿½ï¿½ï¿½Þ¥ï¿½É½ï¿½ï¿½ï¿½ï¿½â¥¸ï¿½å¡¼ï¿½ï¿½
 //
 //
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
+#include <stdio.h>
 #include <string.h>
 
 #include "brother_devinfo.h"
@@ -45,7 +46,7 @@
 extern BOOL  bTxScanCmd;
 
 //
-// Cancel¥³¥Þ¥ó¥ÉÁ÷¿®ºÑ¤ß¥Õ¥é¥°
+// Cancelï¿½ï¿½ï¿½Þ¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¤ß¥Õ¥é¥°
 //
 BOOL  bTxCancelCmd = FALSE;
 
@@ -56,15 +57,15 @@ BOOL  bTxCancelCmd = FALSE;
 //
 //
 //	Abstract:
-//		¥­¥ã¥ó¥»¥ë¥³¥Þ¥ó¥É¤òÁ÷¿®¤¹¤ë
+//		ï¿½ï¿½ï¿½ï¿½ó¥»¥ë¥³ï¿½Þ¥ï¿½É¤ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 //
 //
 //	Parameters:
-//		¤Ê¤·
+//		ï¿½Ê¤ï¿½
 //
 //
 //	Return values:
-//		¤Ê¤·
+//		ï¿½Ê¤ï¿½
 //
 //-----------------------------------------------------------------------------
 //
@@ -73,7 +74,7 @@ SendCancelCommand( usb_dev_handle *hScanner, int seriesNo )
 {
     if (bTxScanCmd) {
 	//
-	// Device ¤¬Open¤µ¤ì¤Æ¤¤¤Æ¡¢Scan¥³¥Þ¥ó¥ÉÁ÷¿®ºÑ¤ß
+	// Device ï¿½ï¿½Openï¿½ï¿½ï¿½ï¿½Æ¤ï¿½ï¿½Æ¡ï¿½Scanï¿½ï¿½ï¿½Þ¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¤ï¿½
 	//
 	if (!bTxCancelCmd) {
 	    WriteDeviceCommand(hScanner, MFCMD_CANCELSCAN,
@@ -86,7 +87,7 @@ SendCancelCommand( usb_dev_handle *hScanner, int seriesNo )
 	}
     } else {
 	//
-	// Device ¤¬Open¤µ¤ì¤Æ¤¤¤Ê¤¤¤«¡¢Scan¥³¥Þ¥ó¥ÉÁ÷¿®¤µ¤ì¤Æ¤¤¤Ê¤¤
+	// Device ï¿½ï¿½Openï¿½ï¿½ï¿½ï¿½Æ¤ï¿½ï¿½Ê¤ï¿½ï¿½ï¿½ï¿½ï¿½Scanï¿½ï¿½ï¿½Þ¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ¤ï¿½ï¿½Ê¤ï¿½
 	//
 	WriteLog("Not need to send CANCEL command");
     }
@@ -99,16 +100,16 @@ SendCancelCommand( usb_dev_handle *hScanner, int seriesNo )
 //
 //
 //	Abstract:
-//		I-Command¤Î¥³¥Þ¥ó¥ÉÊ¸»úÎó¤òÀ¸À®¤¹¤ë
+//		I-Commandï¿½Î¥ï¿½ï¿½Þ¥ï¿½ï¿½Ê¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 //
 //
 //	Parameters:
 //		lpszCmdStr
-//			¥³¥Þ¥ó¥ÉÊ¸»úÎó¤Ø¤Î¥Ý¥¤¥ó¥¿
+//			ï¿½ï¿½ï¿½Þ¥ï¿½ï¿½Ê¸ï¿½ï¿½ï¿½ï¿½Ø¤Î¥Ý¥ï¿½ï¿½ï¿½
 //
 //
 //	Return values:
-//		¥³¥Þ¥ó¥ÉÊ¸»úÎóÄ¹
+//		ï¿½ï¿½ï¿½Þ¥ï¿½ï¿½Ê¸ï¿½ï¿½ï¿½ï¿½Ä¹
 //
 //-----------------------------------------------------------------------------
 //
@@ -119,32 +120,32 @@ MakeupScanQueryCmd( Brother_Scanner *this, LPSTR lpszCmdStr )
 
 
 	//
-	// ¥³¥Þ¥ó¥ÉÊ¸»úÎó¤Î¥»¥Ã¥È
+	// ï¿½ï¿½ï¿½Þ¥ï¿½ï¿½Ê¸ï¿½ï¿½ï¿½ï¿½Î¥ï¿½ï¿½Ã¥ï¿½
 	//
 	strcpy( lpszCmdStr, MFCMD_QUERYSCANINFO );
 
 	//
-	// ²òÁüÅÙ¥Ñ¥é¥á¡¼¥¿¤Î¥»¥Ã¥È
+	// ï¿½ï¿½ï¿½ï¿½ï¿½Ù¥Ñ¥ï¿½á¡¼ï¿½ï¿½ï¿½Î¥ï¿½ï¿½Ã¥ï¿½
 	//
 	strcat( lpszCmdStr, MFCMD_RESOLUTION );
 
-	// ¼çÁöºº²òÁüÅÙ¤Î¥»¥Ã¥È
-	WordToStr( this->scanInfo.UserSelect.wResoX, szCmdStrTemp );
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¤Î¥ï¿½ï¿½Ã¥ï¿½
+	sprintf( szCmdStrTemp, "%u", this->scanInfo.UserSelect.wResoX );
 	strcat( lpszCmdStr, szCmdStrTemp );
 	strcat( lpszCmdStr, MFCMD_SEPARATOR );
 
-	// ÉûÁöºº²òÁüÅÙ¤Î¥»¥Ã¥È
-	WordToStr( this->scanInfo.UserSelect.wResoY, szCmdStrTemp );
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¤Î¥ï¿½ï¿½Ã¥ï¿½
+	sprintf( szCmdStrTemp, "%u", this->scanInfo.UserSelect.wResoY );
 	strcat( lpszCmdStr, szCmdStrTemp );
 	strcat( lpszCmdStr, MFCMD_LF );
 
 	//
-	// ÆÉ¤ß¼è¤ê¥â¡¼¥É¤Î¥»¥Ã¥È
+	// ï¿½É¤ß¼ï¿½ï¿½â¡¼ï¿½É¤Î¥ï¿½ï¿½Ã¥ï¿½
 	//
 	MakeupColorTypeCommand( this->devScanInfo.wColorType, lpszCmdStr );
 
 	//
-	// Terminater¤Î¥»¥Ã¥È
+	// Terminaterï¿½Î¥ï¿½ï¿½Ã¥ï¿½
 	//
 	strcat( lpszCmdStr, (LPSTR)MFCMD_TERMINATOR );
 	WriteLog("Resolution Command : %s",lpszCmdStr);
@@ -158,19 +159,19 @@ MakeupScanQueryCmd( Brother_Scanner *this, LPSTR lpszCmdStr )
 //
 //
 //	Abstract:
-//		X-Command¤Î¥³¥Þ¥ó¥ÉÊ¸»úÎó¤òÀ¸À®¤¹¤ë
+//		X-Commandï¿½Î¥ï¿½ï¿½Þ¥ï¿½ï¿½Ê¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 //
 //
 //	Parameters:
 //		lpszCmdStr
-//			¥³¥Þ¥ó¥ÉÊ¸»úÎó¤Ø¤Î¥Ý¥¤¥ó¥¿
+//			ï¿½ï¿½ï¿½Þ¥ï¿½ï¿½Ê¸ï¿½ï¿½ï¿½ï¿½Ø¤Î¥Ý¥ï¿½ï¿½ï¿½
 //
 //
 //	Return values:
-//		¥³¥Þ¥ó¥ÉÊ¸»úÎóÄ¹
+//		ï¿½ï¿½ï¿½Þ¥ï¿½ï¿½Ê¸ï¿½ï¿½ï¿½ï¿½Ä¹
 //
 //-----------------------------------------------------------------------------
-//	MakeupScanStartCmd¡ÊµìMakeScanCom¡Ë
+//	MakeupScanStartCmdï¿½Êµï¿½MakeScanComï¿½ï¿½
 int
 MakeupScanStartCmd( Brother_Scanner *this, LPSTR lpszCmdStr )
 {
@@ -178,68 +179,68 @@ MakeupScanStartCmd( Brother_Scanner *this, LPSTR lpszCmdStr )
 
 
 	//
-	// ¥³¥Þ¥ó¥ÉÊ¸»úÎó¤Î¥»¥Ã¥È
+	// ï¿½ï¿½ï¿½Þ¥ï¿½ï¿½Ê¸ï¿½ï¿½ï¿½ï¿½Î¥ï¿½ï¿½Ã¥ï¿½
 	//
 	strcpy( lpszCmdStr, MFCMD_STARTSCANNING );
 
 	//
-	// ²òÁüÅÙ¥Ñ¥é¥á¡¼¥¿¤Î¥»¥Ã¥È
+	// ï¿½ï¿½ï¿½ï¿½ï¿½Ù¥Ñ¥ï¿½á¡¼ï¿½ï¿½ï¿½Î¥ï¿½ï¿½Ã¥ï¿½
 	//
 	strcat( lpszCmdStr, MFCMD_RESOLUTION );
 
-	// ¼çÁöºº²òÁüÅÙ¤Î¥»¥Ã¥È
-	WordToStr( this->devScanInfo.DeviceScan.wResoX, szCmdStrTemp );
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¤Î¥ï¿½ï¿½Ã¥ï¿½
+	sprintf( szCmdStrTemp, "%u", this->devScanInfo.DeviceScan.wResoX );
 	strcat( lpszCmdStr, szCmdStrTemp );
 	strcat( lpszCmdStr, MFCMD_SEPARATOR );
 
-	// ÉûÁöºº²òÁüÅÙ¤Î¥»¥Ã¥È
-	WordToStr( this->devScanInfo.DeviceScan.wResoY, szCmdStrTemp );
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¤Î¥ï¿½ï¿½Ã¥ï¿½
+	sprintf( szCmdStrTemp, "%u", this->devScanInfo.DeviceScan.wResoY );
 	strcat( lpszCmdStr, szCmdStrTemp );
 	strcat( lpszCmdStr, MFCMD_LF );
 
 	//
-	// ÆÉ¤ß¼è¤ê¥â¡¼¥É¤Î¥»¥Ã¥È
+	// ï¿½É¤ß¼ï¿½ï¿½â¡¼ï¿½É¤Î¥ï¿½ï¿½Ã¥ï¿½
 	//
 	MakeupColorTypeCommand( this->devScanInfo.wColorType, lpszCmdStr );
 
 	//
-	// °µ½Ì¥â¡¼¥É¤Î¥»¥Ã¥È
+	// ï¿½ï¿½ï¿½Ì¥â¡¼ï¿½É¤Î¥ï¿½ï¿½Ã¥ï¿½
 	//
 	strcat( lpszCmdStr, MFCMD_COMPRESSION );
 	if( this->modelConfig.bCompressEnbale ){
-		// PackBits°µ½Ì¤¢¤ê
+		// PackBitsï¿½ï¿½ï¿½Ì¤ï¿½ï¿½ï¿½
 		strcat( lpszCmdStr, MFCMD_COMP_PACKBITS );
 	}else{
-		// °µ½ÌÌµ¤·
+		// ï¿½ï¿½ï¿½ï¿½Ìµï¿½ï¿½
 		strcat( lpszCmdStr, MFCMD_COMP_NONE );
 	}
 
 	//
-	// Brightness¥Ñ¥é¥á¡¼¥¿¤Î¥»¥Ã¥È
+	// Brightnessï¿½Ñ¥ï¿½á¡¼ï¿½ï¿½ï¿½Î¥ï¿½ï¿½Ã¥ï¿½
 	//
 	strcat( lpszCmdStr, MFCMD_BRIGHTNESS );
 	MakePercentStr( this->uiSetting.nBrightness, szCmdStrTemp );
 	strcat( lpszCmdStr, szCmdStrTemp );
 
 	//
-	// Contrast¥Ñ¥é¥á¡¼¥¿¤Î¥»¥Ã¥È
+	// Contrastï¿½Ñ¥ï¿½á¡¼ï¿½ï¿½ï¿½Î¥ï¿½ï¿½Ã¥ï¿½
 	//
 	strcat( lpszCmdStr, MFCMD_CONTRAST );
 	MakePercentStr( this->uiSetting.nContrast, szCmdStrTemp );
 	strcat( lpszCmdStr, szCmdStrTemp );
 
 	//
-	// Ì¾»É¥â¡¼¥É¤Î¥»¥Ã¥È
+	// Ì¾ï¿½É¥â¡¼ï¿½É¤Î¥ï¿½ï¿½Ã¥ï¿½
 	//
 	strcat( lpszCmdStr, MFCMD_BUSINESS_OFF );
 
 	//
-	// Photo¥â¡¼¥É¤Î¥»¥Ã¥È
+	// Photoï¿½â¡¼ï¿½É¤Î¥ï¿½ï¿½Ã¥ï¿½
 	//
 	strcat( lpszCmdStr, MFCMD_PHOTOMODE_OFF );
 
 	//
-	// ÆÉ¤ß¼è¤êÈÏ°Ï¤Î¥»¥Ã¥È
+	// ï¿½É¤ß¼ï¿½ï¿½ï¿½Ï°Ï¤Î¥ï¿½ï¿½Ã¥ï¿½
 	//
 	strcat( lpszCmdStr, MFCMD_SCANNIGAREA );
 	MakeDotStr( this->devScanInfo.ScanAreaDot.left, szCmdStrTemp, TRUE );
@@ -263,7 +264,7 @@ MakeupScanStartCmd( Brother_Scanner *this, LPSTR lpszCmdStr )
 	}
 
 	//
-	// Terminater¤Î¥»¥Ã¥È
+	// Terminaterï¿½Î¥ï¿½ï¿½Ã¥ï¿½
 	//
 	strcat( lpszCmdStr, (LPSTR)MFCMD_TERMINATOR );
 
@@ -277,19 +278,19 @@ MakeupScanStartCmd( Brother_Scanner *this, LPSTR lpszCmdStr )
 //
 //
 //	Abstract:
-//		¥«¥é¡¼¥¿¥¤¥×¡¦¥³¥Þ¥ó¥ÉÊ¸»úÎó¤òÀ¸À®¤¹¤ë
+//		ï¿½ï¿½ï¿½é¡¼ï¿½ï¿½ï¿½ï¿½ï¿½×¡ï¿½ï¿½ï¿½ï¿½Þ¥ï¿½ï¿½Ê¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 //
 //
 //	Parameters:
 //		nColorType
-//			¥«¥é¡¼¥¿¥¤¥×ÈÖ¹æ
+//			ï¿½ï¿½ï¿½é¡¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¹ï¿½
 //
 //		lpszColorCmd
-//			¥«¥é¡¼¥¿¥¤¥×¡¦¥³¥Þ¥ó¥ÉÊ¸»úÎó¤Ø¤Î¥Ý¥¤¥ó¥¿
+//			ï¿½ï¿½ï¿½é¡¼ï¿½ï¿½ï¿½ï¿½ï¿½×¡ï¿½ï¿½ï¿½ï¿½Þ¥ï¿½ï¿½Ê¸ï¿½ï¿½ï¿½ï¿½Ø¤Î¥Ý¥ï¿½ï¿½ï¿½
 //
 //
 //	Return values:
-//		¤Ê¤·
+//		ï¿½Ê¤ï¿½
 //
 //-----------------------------------------------------------------------------
 //
@@ -332,22 +333,22 @@ MakeupColorTypeCommand( WORD nColorType, LPSTR lpszColorCmd )
 //
 //
 //	Abstract:
-//		Brightness/Contrast¤Î¥Ñ¥é¥á¡¼¥¿Ê¸»úÎó¤òÀ¸À®¤¹¤ë
+//		Brightness/Contrastï¿½Î¥Ñ¥ï¿½á¡¼ï¿½ï¿½Ê¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 //
 //
 //	Parameters:
 //		nPercent
-//			Brightness/Contrast¥Ñ¥é¥á¡¼¥¿
+//			Brightness/Contrastï¿½Ñ¥ï¿½á¡¼ï¿½ï¿½
 //
 //		lpszStr
-//			¥Ñ¥é¥á¡¼¥¿Ê¸»úÎó¥Ð¥Ã¥Õ¥¡¤Ø¤Î¥Ý¥¤¥ó¥¿
+//			ï¿½Ñ¥ï¿½á¡¼ï¿½ï¿½Ê¸ï¿½ï¿½ï¿½ï¿½Ð¥Ã¥Õ¥ï¿½ï¿½Ø¤Î¥Ý¥ï¿½ï¿½ï¿½
 //
 //
 //	Return values:
-//		¤Ê¤·
+//		ï¿½Ê¤ï¿½
 //
 //-----------------------------------------------------------------------------
-//	MakePercentStr¡ÊµìMakeContrastStr¡Ë
+//	MakePercentStrï¿½Êµï¿½MakeContrastStrï¿½ï¿½
 void
 MakePercentStr( int nPercent, LPSTR lpszStr )
 {
@@ -355,7 +356,7 @@ MakePercentStr( int nPercent, LPSTR lpszStr )
 
 
 	//
-	// -50¡Á+50¤ò0%¡Á100%¤ËÊÑ´¹
+	// -50ï¿½ï¿½+50ï¿½ï¿½0%ï¿½ï¿½100%ï¿½ï¿½ï¿½Ñ´ï¿½
 	//
 	nPercent += 50;
 	if( nPercent < 0 ){
@@ -364,9 +365,9 @@ MakePercentStr( int nPercent, LPSTR lpszStr )
 		nPercent = 100;
 	}
 	//
-	//¥³¥Þ¥ó¥ÉÊ¸»úÎó¤ËÊÑ´¹
+	//ï¿½ï¿½ï¿½Þ¥ï¿½ï¿½Ê¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½
 	//
-	WordToStr( (WORD)nPercent, lpszStr );
+	sprintf( lpszStr, "%u", (WORD)nPercent );
 	nLength = strlen( lpszStr );
 	lpszStr += nLength;
 	*lpszStr++ = MFCMD_LFCHR;
@@ -380,22 +381,22 @@ MakePercentStr( int nPercent, LPSTR lpszStr )
 //
 //
 //	Abstract:
-//		¥¹¥­¥ã¥óÈÏ°Ï¥Ñ¥é¥á¡¼¥¿Ê¸»úÎó¤òÀ¸À®¤¹¤ë
+//		ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï°Ï¥Ñ¥ï¿½á¡¼ï¿½ï¿½Ê¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 //
 //
 //	Parameters:
 //		nPosition
-//			¥¹¥­¥ã¥óÈÏ°Ï¤ÎºÂÉ¸ÃÍ
+//			ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï°Ï¤Îºï¿½É¸ï¿½ï¿½
 //
 //		lpszStr
-//			¥Ñ¥é¥á¡¼¥¿Ê¸»úÎó¥Ð¥Ã¥Õ¥¡¤Ø¤Î¥Ý¥¤¥ó¥¿
+//			ï¿½Ñ¥ï¿½á¡¼ï¿½ï¿½Ê¸ï¿½ï¿½ï¿½ï¿½Ð¥Ã¥Õ¥ï¿½ï¿½Ø¤Î¥Ý¥ï¿½ï¿½ï¿½
 //
 //		bSeparator
-//			¥»¥Ñ¥ì¡¼¥¿ÉÕ²Ã¥Õ¥é¥°
+//			ï¿½ï¿½ï¿½Ñ¥ì¡¼ï¿½ï¿½ï¿½Õ²Ã¥Õ¥é¥°
 //
 //
 //	Return values:
-//		¤Ê¤·
+//		ï¿½Ê¤ï¿½
 //
 //-----------------------------------------------------------------------------
 //
@@ -405,7 +406,7 @@ MakeDotStr( int nPosition, LPSTR lpszStr, BOOL bSeparator )
 	int  nLength;
 
 
-	WordToStr( (WORD)nPosition, lpszStr );
+	sprintf( lpszStr, "%u", (WORD)nPosition );
 	nLength = strlen( lpszStr );
 	lpszStr += nLength;
 	if( bSeparator ){

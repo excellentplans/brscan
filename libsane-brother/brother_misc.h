@@ -26,7 +26,7 @@
 //
 //
 //	Abstract:
-//			³Æ¼ï´Ø¿ô·²¡Ê¼ç¤ËÊ¸»úÎó½èÍý´Ø¿ô¡Ë¡¦¥Ø¥Ã¥À¡¼
+//			ï¿½Æ¼ï¿½Ø¿ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ê¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø¿ï¿½ï¿½Ë¡ï¿½ï¿½Ø¥Ã¥ï¿½ï¿½ï¿½
 //
 //
 ///////////////////////////////////////////////////////////////////////////////
@@ -37,17 +37,10 @@
 #include "brother_dtype.h"
 
 //
-// ´Ø¿ô¤Î¥×¥í¥È¥¿¥¤¥×Àë¸À
+// ï¿½Ø¿ï¿½ï¿½Î¥×¥ï¿½ï¿½È¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 //
-void    GetPathFromFileName( LPSTR lpszFileName );
-void    MakePathName( LPSTR lpszPathName, LPSTR lpszAddName );
 LPSTR   GetToken( LPSTR *lppszData );
 WORD    StrToWord( LPSTR lpszText );
-LPSTR   WordToStr( WORD wValue, LPSTR lpszTextTop );
-short   StrToShort( LPSTR lpszText );
-LPSTR   ShortToStr( short nValue, LPSTR lpszTextTop );
-DWORD   StrToDword( LPSTR lpszText );
-LPSTR   DwordToStr( DWORD dwValue, LPSTR lpszTextTop );
 
 #endif //_BROTHER_MISC_H_
 

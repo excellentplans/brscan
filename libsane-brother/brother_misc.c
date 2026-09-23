@@ -26,7 +26,7 @@
 //
 //
 //	Abstract:
-//			³Æ¼ï´Ø¿ô·²
+//			ï¿½Æ¼ï¿½Ø¿ï¿½ï¿½ï¿½
 //
 //
 ///////////////////////////////////////////////////////////////////////////////
@@ -38,94 +38,21 @@
 
 //-----------------------------------------------------------------------------
 //
-//	Function name:	GetPathFromFileName
-//
-//
-//	Abstract:
-//		¥Õ¥¡¥¤¥ë¤Î¥Õ¥ë¥Ñ¥¹Ì¾¤«¤é¥Ñ¥¹Ì¾¤ËÊÑ´¹¤¹¤ë
-//
-//
-//	Parameters:
-//		lpszLogStr
-//			in:  ¥Õ¥¡¥¤¥ë¤Î¥Õ¥ë¥Ñ¥¹Ì¾¤Ø¤Î¥Ý¥¤¥ó¥¿
-//			out: ¥Ñ¥¹Ì¾¤¬³ÊÇ¼¤µ¤ì¤ë
-//
-//
-//	Return values:
-//		¤Ê¤·
-//
-//-----------------------------------------------------------------------------
-//
-void
-GetPathFromFileName( LPSTR lpszFileName )
-{
-	int  nFileNameSize;
-	LPSTR  lpszNameTop;
-
-	lpszNameTop = lpszFileName;
-	nFileNameSize = strlen( lpszFileName );
-	lpszFileName += nFileNameSize;
-
-	for( ; nFileNameSize > 0; --nFileNameSize ){
-		if( *(--lpszFileName) == '\\')
-			break;
-	}
-	if( nFileNameSize <= 0 ){
-		*lpszNameTop = '\0';
-	}else{
-		*lpszFileName = '\0';
-	}
-}
-
-
-//-----------------------------------------------------------------------------
-//
-//	Function name:	MakePathName
-//
-//
-//	Abstract:
-//		¥Ñ¥¹Ì¾¤Ë¥Õ¥¡¥¤¥ë¡¿¥Õ¥©¥ë¥ÀÌ¾¤òÄÉ²Ã¤¹¤ë
-//
-//
-//	Parameters:
-//		lpszPathName
-//			in:  ¥Ñ¥¹Ì¾¤Ø¤Î¥Ý¥¤¥ó¥¿
-//			out: ¥Õ¥¡¥¤¥ë¡¿¥Õ¥©¥ë¥À¤Î¥Õ¥ë¥Ñ¥¹Ì¾¤¬³ÊÇ¼¤µ¤ì¤ë
-//
-//		lpszAddName
-//			in:  ¥Õ¥¡¥¤¥ë¡¿¥Õ¥©¥ë¥ÀÌ¾¤Ø¤Î¥Ý¥¤¥ó¥¿
-//
-//
-//	Return values:
-//		¤Ê¤·
-//
-//-----------------------------------------------------------------------------
-//
-void
-MakePathName( LPSTR lpszPathName, LPSTR lpszAddName )
-{
-	strcat( lpszPathName, "\\" );
-	strcat( lpszPathName, lpszAddName );
-}
-
-
-//-----------------------------------------------------------------------------
-//
 //	Function name:	GetToken
 //
 //
 //	Abstract:
-//		ÆþÎÏÊ¸»úÎó¤«¤éToken¤ò¼è¤ê½Ð¤¹
+//		ï¿½ï¿½ï¿½ï¿½Ê¸ï¿½ï¿½ï¿½ó¤«¤ï¿½Tokenï¿½ï¿½ï¿½ï¿½Ð¤ï¿½
 //
 //
 //	Parameters:
 //		lppszData
-//			in:  Ê¸»úÎó¤Ø¤Î¥Ý¥¤¥ó¥¿¤Ø¤Î¥Ý¥¤¥ó¥¿
-//			out: Token¼è¤ê½Ð¤·¸å¤ÎÊ¸»úÎó¤Ø¤Î¥Ý¥¤¥ó¥¿¤¬³ÊÇ¼¤µ¤ì¤ë
+//			in:  Ê¸ï¿½ï¿½ï¿½ï¿½Ø¤Î¥Ý¥ï¿½ï¿½ó¥¿¤Ø¤Î¥Ý¥ï¿½ï¿½ï¿½
+//			out: Tokenï¿½ï¿½ï¿½Ð¤ï¿½ï¿½ï¿½ï¿½Ê¸ï¿½ï¿½ï¿½ï¿½Ø¤Î¥Ý¥ï¿½ï¿½ó¥¿¤ï¿½ï¿½ï¿½Ç¼ï¿½ï¿½ï¿½ï¿½ï¿½
 //
 //
 //	Return values:
-//		¼è¤ê½Ð¤·¤¿Token¤Ø¤Î¥Ý¥¤¥ó¥¿
+//		ï¿½ï¿½ï¿½Ð¤ï¿½ï¿½ï¿½Tokenï¿½Ø¤Î¥Ý¥ï¿½ï¿½ï¿½
 //
 //-----------------------------------------------------------------------------
 //
@@ -160,16 +87,16 @@ GetToken( LPSTR *lppszData )
 //
 //
 //	Abstract:
-//		Ê¸»úÎó¤ò¿ôÃÍ(WORD)¤ËÊÑ´¹
+//		Ê¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½(WORD)ï¿½ï¿½ï¿½Ñ´ï¿½
 //
 //
 //	Parameters:
 //		lpszText
-//			Ê¸»úÎó¤Ø¤Î¥Ý¥¤¥ó¥¿
+//			Ê¸ï¿½ï¿½ï¿½ï¿½Ø¤Î¥Ý¥ï¿½ï¿½ï¿½
 //
 //
 //	Return values:
-//		ÊÑ´¹¤µ¤ì¤¿¿ôÃÍ
+//		ï¿½Ñ´ï¿½ï¿½ï¿½ï¿½ì¤¿ï¿½ï¿½ï¿½ï¿½
 //
 //-----------------------------------------------------------------------------
 //
@@ -192,245 +119,6 @@ StrToWord( LPSTR lpszText )
 		}
 	}
 	return wResult;
-}
-
-
-//-----------------------------------------------------------------------------
-//
-//	Function name:	WordToStr
-//
-//
-//	Abstract:
-//		¿ôÃÍ(WORD)¤òÊ¸»úÎó¤ËÊÑ´¹
-//
-//
-//	Parameters:
-//		wValue
-//			¿ôÃÍ(WORD)
-//
-//		lpszTextTop
-//			Ê¸»úÎó¤ò³ÊÇ¼¤¹¤ë¥Ð¥Ã¥Õ¥¡¤Ø¤Î¥Ý¥¤¥ó¥¿
-//
-//
-//	Return values:
-//		ÊÑ´¹¤µ¤ì¤¿Ê¸»úÎó¤Ø¤Î¥Ý¥¤¥ó¥¿
-//
-//-----------------------------------------------------------------------------
-//
-LPSTR
-WordToStr( WORD wValue, LPSTR lpszTextTop )
-{
-	LPSTR  lpszText;
-	char   szTemp[ 8 ];
-	LPSTR  lpszTemp;
-	int    nTextLen;
-
-	lpszTemp = szTemp;
-	do{
-		*lpszTemp++ = '0' + ( wValue % 10 );
-		wValue /= 10;
-	}while( wValue > 0 );
-	*lpszTemp = '\0';
-
-	lpszText = lpszTextTop;
-	nTextLen = strlen( szTemp );
-	for( ; nTextLen > 0; nTextLen-- ){
-		*lpszText++ = *(--lpszTemp);
-	}
-	*lpszText = '\0';
-
-	return lpszTextTop;
-}
-
-
-//-----------------------------------------------------------------------------
-//
-//	Function name:	StrToShort
-//
-//
-//	Abstract:
-//		Ê¸»úÎó¤ò¿ôÃÍ(short)¤ËÊÑ´¹
-//
-//
-//	Parameters:
-//		lpszText
-//			Ê¸»úÎó¤Ø¤Î¥Ý¥¤¥ó¥¿
-//
-//
-//	Return values:
-//		ÊÑ´¹¤µ¤ì¤¿¿ôÃÍ
-//
-//-----------------------------------------------------------------------------
-//
-short
-StrToShort( LPSTR lpszText )
-{
-	short  nSign = 1;
-	short  nResult = 0;
-	char   chData = *lpszText;
-
-	if( lpszText != NULL ){
-		if( *lpszText == '-' ){
-			nSign = -1;
-			lpszText++;
-		}
-		while( chData ){
-			if( '0' <= chData && chData <= '9' ){
-				nResult = nResult * 10 + ( chData - '0' );
-			}else{
-				nResult = 0;
-				break;
-			}
-			lpszText++;
-			chData = *lpszText;
-		}
-		nResult *= nSign;
-	}
-	return nResult;
-}
-
-
-//-----------------------------------------------------------------------------
-//
-//	Function name:	ShortToStr
-//
-//
-//	Abstract:
-//		¿ôÃÍ(short)¤òÊ¸»úÎó¤ËÊÑ´¹
-//
-//
-//	Parameters:
-//		nValue
-//			¿ôÃÍ(short)
-//
-//		lpszTextTop
-//			Ê¸»úÎó¤ò³ÊÇ¼¤¹¤ë¥Ð¥Ã¥Õ¥¡¤Ø¤Î¥Ý¥¤¥ó¥¿
-//
-//
-//	Return values:
-//		ÊÑ´¹¤µ¤ì¤¿Ê¸»úÎó¤Ø¤Î¥Ý¥¤¥ó¥¿
-//
-//-----------------------------------------------------------------------------
-//
-LPSTR
-ShortToStr( short nValue, LPSTR lpszTextTop )
-{
-	LPSTR  lpszText;
-	char   szTemp[ 8 ];
-	LPSTR  lpszTemp;
-	int    nTextLen;
-	BOOL   bSign = FALSE;
-
-	if( nValue < 0 ){
-		nValue *= -1;
-		bSign = TRUE;
-	}
-	lpszTemp = szTemp;
-	do{
-		*lpszTemp++ = '0' + ( nValue % 10 );
-		nValue /= 10;
-	}while( nValue > 0 );
-	*lpszTemp = '\0';
-
-	lpszText = lpszTextTop;
-	if( bSign ){
-		*lpszText++ = '-';
-	}
-	nTextLen = strlen( szTemp );
-	for( ; nTextLen > 0; nTextLen-- ){
-		*lpszText++ = *(--lpszTemp);
-	}
-	*lpszText = '\0';
-
-	return lpszTextTop;
-}
-
-
-//-----------------------------------------------------------------------------
-//
-//	Function name:	StrToDword
-//
-//
-//	Abstract:
-//		Ê¸»úÎó¤ò¿ôÃÍ(DWORD)¤ËÊÑ´¹
-//
-//
-//	Parameters:
-//		lpszText
-//			Ê¸»úÎó¤Ø¤Î¥Ý¥¤¥ó¥¿
-//
-//
-//	Return values:
-//		ÊÑ´¹¤µ¤ì¤¿¿ôÃÍ
-//
-//-----------------------------------------------------------------------------
-//
-DWORD
-StrToDword( LPSTR lpszText )
-{
-	DWORD  dwResult = 0;
-	char  chData = *lpszText;
-
-	if( lpszText != NULL ){
-		while( chData ){
-			if( '0' <= chData && chData <= '9' ){
-				dwResult = dwResult * 10 + ( chData - '0' );
-			}else{
-				dwResult = 0;
-				break;
-			}
-			chData = *lpszText++;
-		}
-	}
-	return dwResult;
-}
-
-
-//-----------------------------------------------------------------------------
-//
-//	Function name:	DwordToStr
-//
-//
-//	Abstract:
-//		¿ôÃÍ(DWORD)¤òÊ¸»úÎó¤ËÊÑ´¹
-//
-//
-//	Parameters:
-//		dwValue
-//			¿ôÃÍ(DWORD)
-//
-//		lpszTextTop
-//			Ê¸»úÎó¤ò³ÊÇ¼¤¹¤ë¥Ð¥Ã¥Õ¥¡¤Ø¤Î¥Ý¥¤¥ó¥¿
-//
-//
-//	Return values:
-//		ÊÑ´¹¤µ¤ì¤¿Ê¸»úÎó¤Ø¤Î¥Ý¥¤¥ó¥¿
-//
-//-----------------------------------------------------------------------------
-//
-LPSTR
-DwordToStr( DWORD dwValue, LPSTR lpszTextTop )
-{
-	LPSTR  lpszText;
-	char   szTemp[ 16 ];
-	LPSTR  lpszTemp;
-	int    nTextLen;
-
-	lpszTemp = szTemp;
-	do{
-		*lpszTemp++ = '0' + (BYTE)( dwValue % 10 );
-		dwValue /= 10;
-	}while( dwValue > 0 );
-	*lpszTemp = '\0';
-
-	lpszText = lpszTextTop;
-	nTextLen = strlen( szTemp );
-	for( ; nTextLen > 0; nTextLen-- ){
-		*lpszText++ = *(--lpszTemp);
-	}
-	*lpszText = '\0';
-
-	return lpszTextTop;
 }
 
 //////// end of brother_misc.c ////////
