@@ -91,7 +91,10 @@ const struct brscan5_model_profile brscan5_profiles[] = {
             .ADF           = 1,      /* ADF only: no FB, no duplex      */
         } },
         .scan_area_width   = 215.9,  /* letter/legal width  */
-        .scan_area_height  = 355.6,  /* letter/legal length */
+        /* The DS-640 is rated for documents up to 72in long (Brother
+           exposes this as "Long Paper"); 355.6mm was merely the legal
+           default, not a hardware limit. */
+        .scan_area_height  = 1828.8, /* 72in long-paper maximum */
         .ep_in             = 0x83,
         .ep_out            = 0x04,
     },
