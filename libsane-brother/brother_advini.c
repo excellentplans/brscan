@@ -501,7 +501,12 @@ int ReadModelInfoSize2(int *size, int *record){
   //#ifdef DEBUGMAIN
   //printf("*record(%d) = ReadModelInfoSub(0,0,&size(%d))\n",*record , *size);
   //#endif
-  return 1;
+  /* FALSE when no model data was found (ini missing or empty): the
+     documented contract is "FALSE: Not exist init file or
+     [SupportModel]". Returning TRUE with record==0 made
+     init_model_info() parse an uninitialized zero-size buffer
+     (heap corruption on the error path). */
+  return (*record > 0);
 }
 
 int ReadModelInfo2(char *lpReturnedString,int nSize){

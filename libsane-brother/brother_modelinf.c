@@ -176,8 +176,12 @@ int init_model_info(void)
 	    recordLength = strlen(readInfoPoint); /* count length of record */
 	    if(NULL == ( modelRecord = MALLOC(recordLength+1)))	 /* Allocate memory for 1 record.*/
 	    {
-		/* ERR���� */
-		(model-1)->next = NULL_C;
+		/* ERR???? */
+		/* Truncate the list after the last complete model; when
+		   the FIRST record fails, model-1 is before the array
+		   (heap underflow) and the truncation is a no-op. */
+		if (model != modelListStart)
+		    (model-1)->next = NULL_C;
 		exit_model_info();		 /* Free all alocated area */
 		modelListGetEnable = FALSE;
 		break;
@@ -204,7 +208,8 @@ int init_model_info(void)
 			if(res == FALSE && NULL != (model->modelTypeName))
 				FREE(model->modelTypeName);
 			FREE(modelRecord);
-			(model-1)->next = NULL_C;
+			if (model != modelListStart)
+			    (model-1)->next = NULL_C;
 			exit_model_info();	/* Free all alocated area */
 			modelListGetEnable = FALSE;
 			break;
@@ -215,7 +220,8 @@ int init_model_info(void)
 			/* Error */
 			FREE(modelRecord);
 			FREE(model->modelTypeName);
-			(model-1)->next = NULL_C;
+			if (model != modelListStart)
+			    (model-1)->next = NULL_C;
 			exit_model_info();						/* Free all alocated area */
 			modelListGetEnable = FALSE;
 			break;
@@ -226,7 +232,8 @@ int init_model_info(void)
 			/* Error */
 			FREE(modelRecord);
 			FREE(model->modelTypeName);
-			(model-1)->next = NULL_C;
+			if (model != modelListStart)
+			    (model-1)->next = NULL_C;
 			exit_model_info();						/* Free all alocated area */
 			modelListGetEnable = FALSE;
 			break;
@@ -243,7 +250,8 @@ int init_model_info(void)
 			/* Error */
 			FREE(modelRecord);
 			FREE(model->modelTypeName);
-			(model-1)->next = NULL_C;
+			if (model != modelListStart)
+			    (model-1)->next = NULL_C;
 			exit_model_info();						/* Free all alocated area */
 			modelListGetEnable = FALSE;
 			break;

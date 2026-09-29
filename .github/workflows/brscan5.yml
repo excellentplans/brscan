@@ -21,6 +21,16 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libsane-dev libusb-dev libusb-1.0-0-dev libjpeg-dev pkg-config cmake
 
+      - name: Install backend data files
+        # sane_init() reads CONFDIR (= /usr/share/sane/brother/, compiled
+        # in) for its model table; without it sane_init fails. Mirror the
+        # `make install` data step here so the replay tests can run.
+        run: |
+          sudo mkdir -p /usr/share/sane/brother
+          sudo cp data/Brsane.ini /usr/share/sane/brother/
+          sudo cp data/brsanenetdevice.cfg /usr/share/sane/brother/
+          sudo ln -sf Brsane.ini /usr/share/sane/brother/Brsane2.ini
+
       - name: Configure
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 
