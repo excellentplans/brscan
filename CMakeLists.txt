@@ -78,7 +78,12 @@ endif()
 # macOS: dlopen lives in libSystem, so there is no separate libdl to link.
 # The backend calls the libusb-0.1 API, supplied here by libusb-compat.
 if(APPLE)
-	find_library(LIBUSB01_LIBRARY NAMES usb usb-0.1 REQUIRED)
+	# find_library(... REQUIRED) needs CMake >= 3.18 but the project
+	# declares cmake_minimum_required(3.5), so handle the failure here.
+	find_library(LIBUSB01_LIBRARY NAMES usb usb-0.1)
+	if(NOT LIBUSB01_LIBRARY)
+		message(FATAL_ERROR "libusb-0.1 compat (libusb-compat) not found")
+	endif()
 	message(STATUS "Found libusb-0.1 compat: ${LIBUSB01_LIBRARY}")
 	target_link_libraries(sane-brother pthread ${LIBUSB01_LIBRARY} ${LIBUSB_LIBRARIES} ${JPEG_LIBRARIES} sane-brother-stubs)
 else()
@@ -273,23 +278,34 @@ foreach(fault IN ITEMS cancel error timeout nodocs jam)
   set_tests_properties(brscan5_${fault} PROPERTIES TIMEOUT 60)
 endforeach()
 
+# Install locations: distros expect the hardcoded /usr paths on Linux, but
+# on macOS /usr sits on the sealed, read-only system volume, so everything
+# goes under the install prefix there (matches BROTHER_SANE_DIR above).
+if(APPLE)
+	set(BROTHER_INSTALL_LIB_SANE ${CMAKE_INSTALL_PREFIX}/lib/sane)
+	set(BROTHER_INSTALL_DATA ${CMAKE_INSTALL_PREFIX}/share/sane/brother)
+else()
+	set(BROTHER_INSTALL_LIB_SANE /usr/lib/sane)
+	set(BROTHER_INSTALL_DATA /usr/share/sane/brother)
+endif()
+
 install(TARGETS brsaneconfig brscandec brcolm)
-install(TARGETS sane-brother LIBRARY DESTINATION /usr/lib/sane)
+install(TARGETS sane-brother LIBRARY DESTINATION ${BROTHER_INSTALL_LIB_SANE})
 
-install(FILES libbrcolm/GrayCmData/BHminiFB/brmfgray.bin DESTINATION /usr/share/sane/brother/GrayCmData/BHminiFB)
-install(FILES libbrcolm/GrayCmData/YL4/brmfgray.bin DESTINATION /usr/share/sane/brother/GrayCmData/YL4)
-install(FILES libbrcolm/GrayCmData/BHL2FB/brmsi06f.bin DESTINATION /usr/share/sane/brother/GrayCmData/BHL2FB)
-install(FILES libbrcolm/GrayCmData/ZLe/brmfgray.bin DESTINATION /usr/share/sane/brother/GrayCmData/ZLe)
-install(FILES libbrcolm/GrayCmData/BHL2/brmsi06.bin DESTINATION /usr/share/sane/brother/GrayCmData/BHL2)
-install(FILES libbrcolm/GrayCmData/ZL2FB/brmsl07f.bin libbrcolm/GrayCmData/ZL2FB/brmsl07f.cm DESTINATION /usr/share/sane/brother/GrayCmData/ZL2FB)
-install(FILES libbrcolm/GrayCmData/ZL2/brmsl07.bin DESTINATION /usr/share/sane/brother/GrayCmData/ZL2)
-install(FILES libbrcolm/GrayCmData/BHLFB/brmfgray.bin DESTINATION /usr/share/sane/brother/GrayCmData/BHLFB)
-install(FILES libbrcolm/GrayCmData/YL4FB/brlutcm.dat libbrcolm/GrayCmData/YL4FB/brmfgray.bin DESTINATION /usr/share/sane/brother/GrayCmData/YL4FB)
-install(FILES libbrcolm/GrayCmData/BHL/brmfgray.bin DESTINATION /usr/share/sane/brother/GrayCmData/BHL)
-install(FILES libbrcolm/GrayCmData/BHMFB/brmfgray.bin DESTINATION /usr/share/sane/brother/GrayCmData/BHMFB)
-install(FILES libbrcolm/GrayCmData/ZLeFB/brlutcm.dat libbrcolm/GrayCmData/ZLeFB/brmfgray.bin DESTINATION /usr/share/sane/brother/GrayCmData/ZLeFB)
+install(FILES libbrcolm/GrayCmData/BHminiFB/brmfgray.bin DESTINATION ${BROTHER_INSTALL_DATA}/GrayCmData/BHminiFB)
+install(FILES libbrcolm/GrayCmData/YL4/brmfgray.bin DESTINATION ${BROTHER_INSTALL_DATA}/GrayCmData/YL4)
+install(FILES libbrcolm/GrayCmData/BHL2FB/brmsi06f.bin DESTINATION ${BROTHER_INSTALL_DATA}/GrayCmData/BHL2FB)
+install(FILES libbrcolm/GrayCmData/ZLe/brmfgray.bin DESTINATION ${BROTHER_INSTALL_DATA}/GrayCmData/ZLe)
+install(FILES libbrcolm/GrayCmData/BHL2/brmsi06.bin DESTINATION ${BROTHER_INSTALL_DATA}/GrayCmData/BHL2)
+install(FILES libbrcolm/GrayCmData/ZL2FB/brmsl07f.bin libbrcolm/GrayCmData/ZL2FB/brmsl07f.cm DESTINATION ${BROTHER_INSTALL_DATA}/GrayCmData/ZL2FB)
+install(FILES libbrcolm/GrayCmData/ZL2/brmsl07.bin DESTINATION ${BROTHER_INSTALL_DATA}/GrayCmData/ZL2)
+install(FILES libbrcolm/GrayCmData/BHLFB/brmfgray.bin DESTINATION ${BROTHER_INSTALL_DATA}/GrayCmData/BHLFB)
+install(FILES libbrcolm/GrayCmData/YL4FB/brlutcm.dat libbrcolm/GrayCmData/YL4FB/brmfgray.bin DESTINATION ${BROTHER_INSTALL_DATA}/GrayCmData/YL4FB)
+install(FILES libbrcolm/GrayCmData/BHL/brmfgray.bin DESTINATION ${BROTHER_INSTALL_DATA}/GrayCmData/BHL)
+install(FILES libbrcolm/GrayCmData/BHMFB/brmfgray.bin DESTINATION ${BROTHER_INSTALL_DATA}/GrayCmData/BHMFB)
+install(FILES libbrcolm/GrayCmData/ZLeFB/brlutcm.dat libbrcolm/GrayCmData/ZLeFB/brmfgray.bin DESTINATION ${BROTHER_INSTALL_DATA}/GrayCmData/ZLeFB)
 
-install(FILES data/brsanenetdevice.cfg data/Brsane.ini DESTINATION /usr/share/sane/brother)
+install(FILES data/brsanenetdevice.cfg data/Brsane.ini DESTINATION ${BROTHER_INSTALL_DATA})
 # BRSANESUFFIX=2 looks for Brsane2.ini
 install(CODE "
   execute_process(COMMAND \${CMAKE_COMMAND} -E create_symlink Brsane.ini \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/share/sane/brother/Brsane2.ini)
