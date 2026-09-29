@@ -86,6 +86,19 @@ sanei_init_debug (const char * backend, int * var)
   DBG (0, "Setting debug level of %s to %d.\n", backend, *var);
 }
 
+#ifdef __APPLE__
+/* macOS provides no isfdtype(); fstat answers the same question. */
+static int
+isfdtype (int fd, int fdtype)
+{
+  struct stat st;
+
+  if (fstat (fd, &st) != 0)
+    return -1;
+  return ((st.st_mode & S_IFMT) == (mode_t) fdtype) ? 1 : 0;
+}
+#endif
+
 void
 sanei_debug_msg
   (int level, int max_level, const char *be, const char *fmt, va_list ap)

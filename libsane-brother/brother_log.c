@@ -53,7 +53,9 @@ static int  nNewLog  = 1;
 
 static HANDLE  hLogFile = 0;
 
+#ifndef BROTHER_SANE_DIR
 #define BROTHER_SANE_DIR "/usr/share/sane/brother/"
+#endif
 
 
 //-----------------------------------------------------------------------------

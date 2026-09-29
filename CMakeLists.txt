@@ -65,7 +65,25 @@ target_include_directories(sane-brother PRIVATE
 	${LIBUSB_INCLUDE_DIR}
 	${JPEG_INCLUDE_DIRS})
 target_compile_definitions(sane-brother PRIVATE BACKEND_NAME=brother BRSANESUFFIX=${BRSANESUFFIX} V_MAJOR=1 V_MINOR=0)
-target_link_libraries(sane-brother dl pthread usb ${LIBUSB_LIBRARIES} ${JPEG_LIBRARIES} sane-brother-stubs)
+# /usr/share lives on the sealed, read-only system volume on macOS, so the
+# backend's data directory has to move under the install prefix.
+if(APPLE)
+	set(BROTHER_DATA_DIR "${CMAKE_INSTALL_PREFIX}/share/sane/brother/")
+	target_compile_definitions(sane-brother PRIVATE
+		BROTHER_SANE_DIR="${BROTHER_DATA_DIR}"
+		CONFDIR="${BROTHER_DATA_DIR}"
+		BROTHER_LIB_DIR="${CMAKE_INSTALL_PREFIX}/lib/")
+	message(STATUS "Brother data dir: ${BROTHER_DATA_DIR}")
+endif()
+# macOS: dlopen lives in libSystem, so there is no separate libdl to link.
+# The backend calls the libusb-0.1 API, supplied here by libusb-compat.
+if(APPLE)
+	find_library(LIBUSB01_LIBRARY NAMES usb usb-0.1 REQUIRED)
+	message(STATUS "Found libusb-0.1 compat: ${LIBUSB01_LIBRARY}")
+	target_link_libraries(sane-brother pthread ${LIBUSB01_LIBRARY} ${LIBUSB_LIBRARIES} ${JPEG_LIBRARIES} sane-brother-stubs)
+else()
+	target_link_libraries(sane-brother dl pthread usb ${LIBUSB_LIBRARIES} ${JPEG_LIBRARIES} sane-brother-stubs)
+endif()
 set_target_properties(sane-brother PROPERTIES SOVERSION 1)
 
 # BRSANESUFFIX=2 code loads libbrscandec2.so and libbrcolm2.so by name

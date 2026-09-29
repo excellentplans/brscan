@@ -77,7 +77,9 @@ typedef struct _netini {
   struct _netini *next;
 } netini;
 
+#ifndef CONFDIR
 #define CONFDIR       "/usr/share/sane/brother/"
+#endif
 
 char *get_net_ini_value(int index ,int key, char *value, int size);
 
