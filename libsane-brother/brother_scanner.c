@@ -91,10 +91,16 @@ int    nWriteLineCount;
 //
 // the name of ScenDec dinamic link library
 //
+/* On macOS the loader does not search the Homebrew prefix for a bare
+   soname, so BROTHER_LIB_DIR (set by CMake) makes this an absolute path. */
+#ifndef BROTHER_LIB_DIR
+#define BROTHER_LIB_DIR ""
+#endif
+
 #if       BRSANESUFFIX == 2
-static char  szScanDecDl[] = "libbrscandec2.so";
+static char  szScanDecDl[] = BROTHER_LIB_DIR "libbrscandec2.so";
 #elif  BRSANESUFFIX == 1
-static char  szScanDecDl[] = "libbrscandec.so.1";
+static char  szScanDecDl[] = BROTHER_LIB_DIR "libbrscandec.so.1";
 #else
 Not support (force causing compile error)
 #endif   //BRSANESUFFIX

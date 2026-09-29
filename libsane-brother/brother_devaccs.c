@@ -1051,12 +1051,16 @@ key_t get_semkey(){
   return semid;
 }
 
+/* macOS (and the BSDs) already declare union semun in <sys/sem.h>;
+   glibc deliberately does not, and leaves it to the caller. */
+#ifndef __APPLE__
 union semun {
   int val;
   struct semid_ds *buf;
   unsigned short *array;
   struct seminfo *__buf;
 };
+#endif
 
 int init_usb_criticalsection(void){
   union semun semuni;

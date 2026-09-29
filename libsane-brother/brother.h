@@ -296,7 +296,9 @@ typedef struct Brother_Scanner {
 #define PSIZE_VMARGIN     60			// �岼�ޡ�����(0.1mmñ��)
 #define PSIZE_HMARGIN     20			// �����ޡ�����(0.1mmñ��)
 
+#ifndef BROTHER_SANE_DIR
 #define BROTHER_SANE_DIR "/usr/share/sane/brother/"
+#endif
 #define BROTHER_GRAYCMDATA_DIR "GrayCmData/"
 
 #endif
